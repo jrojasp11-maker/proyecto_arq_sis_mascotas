@@ -71,7 +71,8 @@ proyecto_arq_sis_mascotas/
 │   ├── demo_api.py             # demostración HTTP de ambos RF
 │   └── servidor.py             # Uvicorn temporal para las verificaciones
 ├── docs/
-│   └── contratos_api.md        # contratos completos de los endpoints
+│   ├── contratos_api.md        # contratos completos de los endpoints
+│   └── informe_semanas_13_14.md # informe combinado de las semanas 13 y 14
 ├── evidencias/
 │   ├── salida_pruebas.txt      # 12 pruebas de persistencia (semana 13)
 │   ├── salida_pruebas_semana14.txt # 39 pruebas de la semana 14
@@ -314,7 +315,13 @@ y RNF pendientes marcados en la sección 7.
 | Persistencia | `persistencia/schema.sql`, `repositorio.py` y `salida_pruebas.txt` |
 | Plantilla 13.1 | `plantilla/plantilla_13_1.pdf` y `plantilla/plantilla_13_1.tex` |
 
-## 12. Plantilla 13.1
+## 12. Documento de las semanas 13 y 14
+
+[`docs/informe_semanas_13_14.md`](docs/informe_semanas_13_14.md) reúne en un
+solo documento la persistencia de la semana 13 y los servicios, contratos,
+pruebas y RNF de la semana 14. Es el texto de lectura continua de la entrega;
+los detalles operativos están en el README y en
+[`docs/contratos_api.md`](docs/contratos_api.md).
 
 `plantilla/plantilla_13_1.tex` se mantiene como documento formal de la semana
 13 (portada, alcance, priorización, matriz RF–RNF, fichas y checklist). Se
