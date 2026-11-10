@@ -1,0 +1,56 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.10, pytest-9.2.0, pluggy-1.7.0 -- C:\Users\user\Downloads\AQSIS\proyecto_arq_sis_mascotas\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\user\Downloads\AQSIS\proyecto_arq_sis_mascotas
+configfile: pytest.ini
+testpaths: pruebas
+plugins: anyio-4.16.0
+collecting ... collected 39 items
+
+pruebas/test_rf05_api.py::test_crear_ficha_valida_201 PASSED             [  2%]
+pruebas/test_rf05_api.py::test_crear_refugio_no_verificado_409 PASSED    [  5%]
+pruebas/test_rf05_api.py::test_crear_datos_invalidos_400 PASSED          [  7%]
+pruebas/test_rf05_api.py::test_actualizar_ficha_200 PASSED               [ 10%]
+pruebas/test_rf05_api.py::test_actualizar_ficha_inexistente_404 PASSED   [ 12%]
+pruebas/test_rf05_api.py::test_actualizar_ficha_de_otro_refugio_403 PASSED [ 15%]
+pruebas/test_rf05_api.py::test_dar_de_baja_204 PASSED                    [ 17%]
+pruebas/test_rf05_api.py::test_dar_de_baja_inexistente_404 PASSED        [ 20%]
+pruebas/test_rf34_api.py::test_catalogo_inicial_200 PASSED               [ 23%]
+pruebas/test_rf34_api.py::test_catalogo_filtros PASSED                   [ 25%]
+pruebas/test_rf34_api.py::test_catalogo_paginacion PASSED                [ 28%]
+pruebas/test_rf34_api.py::test_catalogo_sin_resultados_200 PASSED        [ 30%]
+pruebas/test_rf34_api.py::test_catalogo_filtro_invalido_400 PASSED       [ 33%]
+pruebas/test_rf34_api.py::test_catalogo_pagina_invalida_400 PASSED       [ 35%]
+pruebas/test_rf34_api.py::test_catalogo_rango_de_edad_invertido_400 PASSED [ 38%]
+pruebas/test_rf34_api.py::test_catalogo_sin_datos_personales_rnf04 PASSED [ 41%]
+pruebas/test_rnf10_integridad.py::test_post_invalido_no_persiste[especie fuera de dominio-cambios0-400-ERR-004] PASSED [ 43%]
+pruebas/test_rnf10_integridad.py::test_post_invalido_no_persiste[tamano fuera de dominio-cambios1-400-ERR-004] PASSED [ 46%]
+pruebas/test_rnf10_integridad.py::test_post_invalido_no_persiste[edad negativa-cambios2-400-ERR-004] PASSED [ 48%]
+pruebas/test_rnf10_integridad.py::test_post_invalido_no_persiste[nombre vac\xedo-cambios3-400-ERR-004] PASSED [ 51%]
+pruebas/test_rnf10_integridad.py::test_post_invalido_no_persiste[campo obligatorio nulo-cambios4-400-ERR-004] PASSED [ 53%]
+pruebas/test_rnf10_integridad.py::test_post_invalido_no_persiste[refugio inexistente-cambios5-404-ERR-008] PASSED [ 56%]
+pruebas/test_rnf10_integridad.py::test_post_invalido_no_persiste[refugio no verificado-cambios6-409-ERR-009] PASSED [ 58%]
+pruebas/test_rnf10_integridad.py::test_post_invalido_no_persiste[m\xe1s de cinco fotograf\xedas-cambios7-400-ERR-004] PASSED [ 61%]
+pruebas/test_rnf10_integridad.py::test_post_invalido_no_persiste[extensi\xf3n no permitida-cambios8-400-ERR-004] PASSED [ 64%]
+pruebas/test_rnf10_integridad.py::test_put_invalido_no_modifica[cambios0] PASSED [ 66%]
+pruebas/test_rnf10_integridad.py::test_put_invalido_no_modifica[cambios1] PASSED [ 69%]
+pruebas/test_rnf10_integridad.py::test_put_invalido_no_modifica[cambios2] PASSED [ 71%]
+pruebas/test_rnf10_integridad.py::test_put_de_otro_refugio_no_modifica PASSED [ 74%]
+pruebas/test_rnf10_integridad.py::test_delete_de_otro_refugio_no_modifica PASSED [ 76%]
+pruebas/test_servicios_aislados.py::test_crear_valido_sin_base_real PASSED [ 79%]
+pruebas/test_servicios_aislados.py::test_crear_rechazado_no_consulta_ni_guarda PASSED [ 82%]
+pruebas/test_servicios_aislados.py::test_consultar_existente_solo_lee PASSED [ 84%]
+pruebas/test_servicios_aislados.py::test_consultar_ausente_lanza_error_controlado PASSED [ 87%]
+pruebas/test_servicios_aislados.py::test_actualizar_delega_en_repositorio PASSED [ 89%]
+pruebas/test_servicios_aislados.py::test_dar_de_baja_delega_en_repositorio PASSED [ 92%]
+pruebas/test_servicios_aislados.py::test_catalogo_normaliza_snake_case_y_delega PASSED [ 94%]
+pruebas/test_servicios_aislados.py::test_catalogo_rechaza_filtro_invalido PASSED [ 97%]
+pruebas/test_servicios_aislados.py::test_servicios_no_abren_conexion_real PASSED [100%]
+
+============================== warnings summary ===============================
+.venv\Lib\site-packages\fastapi\testclient.py:1
+  C:\Users\user\Downloads\AQSIS\proyecto_arq_sis_mascotas\.venv\Lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 39 passed, 1 warning in 1.60s ========================

@@ -1,0 +1,190 @@
+DEMOSTRACIÓN HTTP DE RF-05 Y RF-34
+==============================================================================
+Base de datos: C:\Users\user\Downloads\AQSIS\proyecto_arq_sis_mascotas\evidencias\demo_api.db
+Cliente: httpx | Servidor: Uvicorn | API: http://127.0.0.1:<puerto>/api/v1
+==============================================================================
+
+==============================================================================
+RF-05 | POST /api/v1/mascotas
+Solicitud:
+{
+  "refugio_id": 1,
+  "nombre": "Nala",
+  "raza": "Mestiza",
+  "especie": "perro",
+  "edad_meses": 24,
+  "tamano": "mediano",
+  "nivel_energia": "media",
+  "experiencia_requerida": "basica",
+  "apta_con_menores": true,
+  "apta_con_mascotas": true,
+  "historial_salud": "Vacunas al día",
+  "historial_comportamiento": "Sociable",
+  "fecha_publicacion": "2026-11-10",
+  "fotografias": [
+    "nala_01.jpg",
+    "nala_02.jpg"
+  ]
+}
+HTTP 201
+{
+  "id": 7,
+  "refugio_id": 1,
+  "nombre": "Nala",
+  "raza": "Mestiza",
+  "especie": "perro",
+  "edad_meses": 24,
+  "tamano": "mediano",
+  "nivel_energia": "media",
+  "experiencia_requerida": "basica",
+  "apta_con_menores": true,
+  "apta_con_mascotas": true,
+  "historial_salud": "Vacunas al día",
+  "historial_comportamiento": "Sociable",
+  "estado": "disponible",
+  "fecha_publicacion": "2026-11-10",
+  "creado_en": "2026-11-10 13:46:00",
+  "refugio_nombre": "Refugio Patitas",
+  "refugio_localidad": "ENGATIVA",
+  "refugio_estado": "verificado",
+  "fotografias": [
+    {
+      "id": 7,
+      "archivo": "nala_01.jpg",
+      "orden": 1
+    },
+    {
+      "id": 8,
+      "archivo": "nala_02.jpg",
+      "orden": 2
+    }
+  ]
+}
+
+==============================================================================
+RF-34 | GET /api/v1/mascotas?especie=perro&tamano=mediano
+HTTP 200
+{
+  "total": 2,
+  "pagina": 1,
+  "por_pagina": 20,
+  "mascotas": [
+    {
+      "id": 3,
+      "nombre": "Rocky",
+      "especie": "perro",
+      "edad_meses": 60,
+      "tamano": "mediano",
+      "nivel_energia": "alta",
+      "fecha_publicacion": "2026-10-03",
+      "refugio_id": 1,
+      "refugio_nombre": "Refugio Patitas",
+      "refugio_localidad": "ENGATIVA",
+      "foto_principal": "rocky_01.jpg"
+    },
+    {
+      "id": 7,
+      "nombre": "Nala",
+      "especie": "perro",
+      "edad_meses": 24,
+      "tamano": "mediano",
+      "nivel_energia": "media",
+      "fecha_publicacion": "2026-11-10",
+      "refugio_id": 1,
+      "refugio_nombre": "Refugio Patitas",
+      "refugio_localidad": "ENGATIVA",
+      "foto_principal": "nala_01.jpg"
+    }
+  ]
+}
+
+==============================================================================
+RF-05 | PUT /api/v1/mascotas/7
+Solicitud:
+{
+  "refugio_id": 1,
+  "nombre": "Nala actualizada",
+  "fotografias": [
+    "nala_01.jpg"
+  ]
+}
+HTTP 200
+{
+  "id": 7,
+  "refugio_id": 1,
+  "nombre": "Nala actualizada",
+  "raza": "Mestiza",
+  "especie": "perro",
+  "edad_meses": 24,
+  "tamano": "mediano",
+  "nivel_energia": "media",
+  "experiencia_requerida": "basica",
+  "apta_con_menores": true,
+  "apta_con_mascotas": true,
+  "historial_salud": "Vacunas al día",
+  "historial_comportamiento": "Sociable",
+  "estado": "disponible",
+  "fecha_publicacion": "2026-11-10",
+  "creado_en": "2026-11-10 13:46:00",
+  "refugio_nombre": "Refugio Patitas",
+  "refugio_localidad": "ENGATIVA",
+  "refugio_estado": "verificado",
+  "fotografias": [
+    {
+      "id": 9,
+      "archivo": "nala_01.jpg",
+      "orden": 1
+    }
+  ]
+}
+
+==============================================================================
+RF-05 | DELETE /api/v1/mascotas/7?refugio_id=1
+HTTP 204
+(sin cuerpo)
+
+==============================================================================
+RF-34 | GET catálogo después de la baja (Nala no debe aparecer)
+HTTP 200
+{
+  "total": 1,
+  "pagina": 1,
+  "por_pagina": 20,
+  "mascotas": [
+    {
+      "id": 3,
+      "nombre": "Rocky",
+      "especie": "perro",
+      "edad_meses": 60,
+      "tamano": "mediano",
+      "nivel_energia": "alta",
+      "fecha_publicacion": "2026-10-03",
+      "refugio_id": 1,
+      "refugio_nombre": "Refugio Patitas",
+      "refugio_localidad": "ENGATIVA",
+      "foto_principal": "rocky_01.jpg"
+    }
+  ]
+}
+
+==============================================================================
+RF-34 | GET catálogo sin coincidencias (condición límite)
+HTTP 200
+{
+  "total": 0,
+  "pagina": 1,
+  "por_pagina": 20,
+  "mascotas": []
+}
+
+==============================================================================
+RF-34 | GET catálogo con filtro inválido
+HTTP 400
+{
+  "detail": "especie debe ser perro o gato",
+  "codigo": "ERR-004"
+}
+
+==============================================================================
+RESULTADO: CUMPLE. Ambos RF responden según el contrato.
+==============================================================================
