@@ -314,6 +314,7 @@ y RNF pendientes marcados en la sección 7.
 | RNF-07 | Pendiente de la semana 3 |
 | Persistencia | `persistencia/schema.sql`, `repositorio.py` y `salida_pruebas.txt` |
 | Plantilla 13.1 | `plantilla/plantilla_13_1.pdf` y `plantilla/plantilla_13_1.tex` |
+| Informe 13 y 14 | `docs/informe_semanas_13_14.md`, `plantilla/plantilla_13_14.tex` y `plantilla/plantilla_13_14.pdf` |
 
 ## 12. Documento de las semanas 13 y 14
 
@@ -327,3 +328,9 @@ los detalles operativos están en el README y en
 13 (portada, alcance, priorización, matriz RF–RNF, fichas y checklist). Se
 compila en Overleaf con **pdfLaTeX** y no requiere archivos adicionales. La
 versión compilada está en `plantilla/plantilla_13_1.pdf`.
+
+El informe combinado también tiene versión formal en
+[`plantilla/plantilla_13_14.tex`](plantilla/plantilla_13_14.tex), con el mismo
+estilo, y su PDF compilado en
+[`plantilla/plantilla_13_14.pdf`](plantilla/plantilla_13_14.pdf). Se compila
+con **pdfLaTeX** en Overleaf sin archivos adicionales.
