@@ -8,3 +8,10 @@ Thumbs.db
 *.log
 *.out
 *.toc
+
+# Artefactos de pruebas y bases locales (no versionar)
+.pytest_cache/
+.coverage
+evidencias/api.db
+evidencias/demo_api.db
+evidencias/rnf_desempeno.db

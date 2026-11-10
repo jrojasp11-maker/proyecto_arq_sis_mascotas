@@ -1,0 +1,7 @@
+[run]
+source = servicios
+omit = servicios/__init__.py
+
+[report]
+show_missing = True
+fail_under = 70
