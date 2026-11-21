@@ -1,0 +1,110 @@
+EVIDENCIA DE LA INTERFAZ EN NAVEGADOR REAL - SEMANA 15
+==============================================================================
+Fecha: 20 de noviembre de 2026
+Navegador: Chromium integrado en OpenCode
+URL: http://127.0.0.1:8000/ui/
+API: http://127.0.0.1:8000/api/v1 (mismo origen, sin CORS adicional)
+Base: evidencias/api.db reiniciada con persistencia.inicializar_db
+Metodo: acciones realizadas sobre los controles de la pagina; se registran el
+mensaje visible y, cuando aplica, las filas de la tabla y las peticiones HTTP
+capturadas por el navegador.
+
+------------------------------------------------------------------------------
+RF-34 | consulta inicial del catalogo
+------------------------------------------------------------------------------
+API HTTP 200: total 3, pagina 1, 3 mascota(s) mostrada(s). Datos recuperados del servidor.
+ids=1,3,2
+Orden observado: Luna, Rocky, Milo (fecha_publicacion ascendente, desempate por id).
+
+------------------------------------------------------------------------------
+RF-05 | crear ficha desde el formulario
+------------------------------------------------------------------------------
+Ficha creada por la API con id 7, estado 'disponible' y 2 fotografias.
+El id ya esta listo para editar o dar de baja.
+El campo "Id de la ficha" quedo con el valor real devuelto: 7.
+
+------------------------------------------------------------------------------
+RF-34 | consulta despues de recargar la pagina
+------------------------------------------------------------------------------
+API HTTP 200: total 4, pagina 1, 4 mascota(s) mostrada(s). Datos recuperados del servidor.
+ids=1,3,2,7
+La ficha 7 aparece despues de la recarga: el resultado no depende de la memoria
+del navegador.
+
+------------------------------------------------------------------------------
+RF-05 | editar con el id real
+------------------------------------------------------------------------------
+Ficha 7 actualizada por la API. Nombre actual: 'Nala actualizada'; estado: 'disponible'.
+
+------------------------------------------------------------------------------
+RF-05 | dar de baja
+------------------------------------------------------------------------------
+Baja confirmada por la API para la ficha 7 (HTTP 204). Vuelva a consultar el
+catalogo para comprobar que ya no aparece.
+
+------------------------------------------------------------------------------
+RF-34 | consulta despues de la baja
+------------------------------------------------------------------------------
+API HTTP 200: total 3, pagina 1, 3 mascota(s) mostrada(s). Datos recuperados del servidor.
+ids=1,3,2
+La ficha 7 ya no aparece (RN-15).
+
+------------------------------------------------------------------------------
+RF-34 | ausencia (filtro valido sin coincidencias)
+------------------------------------------------------------------------------
+La API devolvio total 0: no hay mascotas que coincidan con los filtros.
+Filtros: especie=gato, tamano=grande.
+Filas visibles antes: 3; filas visibles despues: 0. No se dejaron datos de una
+consulta anterior como si fueran la respuesta actual.
+
+------------------------------------------------------------------------------
+RF-34 | entrada invalida
+------------------------------------------------------------------------------
+Consultar catalogo: rechazo HTTP 400 (ERR-004). especie debe ser perro o gato
+Corrija los datos y vuelva a enviar.
+Filas visibles: 0. El mensaje incluye el codigo del contrato y orienta la correccion.
+
+------------------------------------------------------------------------------
+RF-05 | rechazo de negocio
+------------------------------------------------------------------------------
+Crear ficha: rechazo HTTP 409 (ERR-009). el refugio 2 no esta verificado y no
+puede publicar fichas Corrija los datos y vuelva a enviar.
+El campo "Nombre" conservo el valor "Nala": las entradas se conservan tras el
+rechazo. El boton quedo habilitado al finalizar el intento.
+
+------------------------------------------------------------------------------
+Estados y errores de comunicacion
+------------------------------------------------------------------------------
+Con el backend en marcha, los botones mostraron "Enviando..." y "Consultando..."
+mientras duraron las peticiones y se rehabilitaron al terminar; no se observaron
+errores de JavaScript en la consola (solo los 400 y 409 esperados del contrato).
+
+Backend detenido, accion Consultar catalogo (la pagina tenia 3 filas):
+  "Consultar catalogo: el servidor no esta disponible (HTTP 502). El resultado
+   no queda confirmado; no reintente automaticamente. La tabla se limpio para
+   no mostrar datos anteriores como vigentes."
+  Filas visibles: 0; boton habilitado; indicador de estado vacio: no hubo exito falso.
+
+Backend detenido, accion Crear ficha:
+  "Crear ficha: el servidor no esta disponible (HTTP 502). El resultado no queda
+   confirmado; no reintente automaticamente."
+  Nombre conservado: Nala; boton habilitado; sin confirmacion de creacion.
+
+------------------------------------------------------------------------------
+Peticiones HTTP capturadas por el navegador (registro de la ultima carga)
+------------------------------------------------------------------------------
+GET 200   /api/v1/mascotas?pagina=1&por_pagina=20
+PUT 200   /api/v1/mascotas/7
+DELETE 204 /api/v1/mascotas/7?refugio_id=1
+GET 200   /api/v1/mascotas?pagina=1&por_pagina=20
+GET 200   /api/v1/mascotas?especie=gato&tamano=grande&pagina=1&por_pagina=20
+GET 400   /api/v1/mascotas?especie=conejo&pagina=1&por_pagina=20
+POST 409  /api/v1/mascotas
+Las dos primeras acciones de la secuencia (GET inicial y POST 201) ocurrieron
+antes de la recarga de pagina y se registran en los mensajes visibles de arriba.
+
+==============================================================================
+RESULTADO: CUMPLE. Los dos RF se ejecutan desde la interfaz contra la API real;
+se observan resultado valido, rechazo, ausencia y fallo de comunicacion sin
+confirmaciones falsas.
+==============================================================================

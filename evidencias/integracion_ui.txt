@@ -1,0 +1,29 @@
+INTEGRACION DE LA INTERFAZ CON LA API REAL - SEMANA 15
+==============================================================================
+Base de datos: C:\Users\user\Downloads\AQSIS\proyecto_arq_sis_mascotas\evidencias\integracion_ui.db
+Servidor: Uvicorn temporal | Cliente: httpx | Interfaz: /ui/
+Los envios reproducen las solicitudes que hace frontend/app.js.
+==============================================================================
+
+UI | GET /ui/ -> 200; /ui/app.js -> 200; /ui/styles.css -> 200
+UI | controles: form-crear, form-catalogo, btn-editar, btn-baja, btn-consultar
+
+RF-05 valido | POST /api/v1/mascotas -> HTTP 201
+  id real devuelto: 7; estado: disponible; fotos: 2
+RF-05 rechazo | POST con refugio no verificado -> HTTP 409; codigo ERR-009; filas: 7
+RF-05 entrada | POST con especie invalida -> HTTP 400; codigo ERR-004
+RF-34 valido | GET /api/v1/mascotas -> HTTP 200; total 4; ids [1, 3, 2, 7]
+RF-34 filtros | perro/mediano -> HTTP 200; ids [3, 7]
+RF-34 paginacion | p1 [1, 3]; p2 [2, 7]; total 4
+RF-34 ausencia | gato/grande -> HTTP 200; total 0; lista []
+RF-34 entrada | especie=conejo -> HTTP 400; codigo ERR-004
+RF-05 edicion | PUT /api/v1/mascotas/7 -> HTTP 200; nombre Nala actualizada
+RF-05 baja | DELETE /api/v1/mascotas/7?refugio_id=1 -> HTTP 204
+RF-34 tras baja | ids [1, 3, 2]; ficha 7 ausente: True
+
+COMUNICACION | backend detenido: error de conexion confirmado (ConnectTimeout); la interfaz avisa 'resultado no confirmado' y no muestra un exito falso.
+PERSISTENCIA | tras reiniciar el backend: HTTP 200; ficha 7 dado de baja ausente: True
+
+==============================================================================
+RESULTADO: CUMPLE. Interfaz, API, servicios, repositorio y base verificados.
+==============================================================================
