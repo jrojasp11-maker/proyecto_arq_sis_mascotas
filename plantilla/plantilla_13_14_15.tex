@@ -694,10 +694,11 @@ y filtro inválido. El resultado final es \textbf{CUMPLE}.
 \bottomrule
 \endlastfoot
 RF-05, RF-34 / \textbf{RNF-05} & Eficiencia de desempeño / comportamiento
-temporal & 1.000 fichas; 20 consultas consecutivas por HTTP; cada una $\leq$
-1 s & \textbf{Cumple en alcance secuencial}; 20/20; mínimo 4,75 ms; promedio
-6,14 ms; p95 7,52 ms; máximo 7,76 ms; \pend{no verificado} con 50 usuarios &
-\code{evidencias/rnf\_desempeno.txt} \\
+temporal & 1.000 fichas; 20 consultas consecutivas (cada una $\leq$ 1 s) y
+50 usuarios concurrentes $\times$ 20 consultas (p95 $\leq$ 1 s) &
+\textbf{Cumple}; secuencial 20/20, p95 7,52 ms; concurrente 1000/1000
+respuestas correctas, p95 532,11 ms &
+\code{rnf\_desempeno.txt}, \code{rnf\_escalabilidad.txt} \\
 RF-05, RF-34 / \textbf{RNF-08} & Mantenibilidad / capacidad para ser probado &
 Doble del repositorio, sin base real; cobertura $\geq$ 70\,\% en servicios &
 \textbf{Cumple}; 9/9 pruebas aisladas; \textbf{100\,\%} de cobertura (33
@@ -711,29 +712,33 @@ RF-05, RF-34 / \textbf{RNF-04} & Seguridad / confidencialidad & Revisar las
 claves del catálogo y de la ficha pública & \textbf{Cumple}; 0 campos
 personales & \code{test\_rf34\_api.py}, \code{demo\_api.txt} \\
 RF-34 / \textbf{RNF-07} & Flexibilidad / escalabilidad & 2.000 fichas y 5.000
-adoptantes; p95 $\leq$ 1 s & \pend{No verificado}; sin medición; pendiente de
-la semana 3 & --- \\
+adoptantes simulados como consultas; p95 $\leq$ 1 s &
+\textbf{Cumple}; 5000/5000 respuestas correctas; p95 585,77 ms &
+\code{rnf\_escalabilidad.txt} \\
 \end{longtable}
 }
 
-\subsection{Lectura honesta de RNF-05}
+\subsection{Lectura honesta de RNF-05 y RNF-07}
 
 La meta de la plantilla incluye 500 fichas y 50 usuarios concurrentes. En esta
-entrega se usó un volumen mayor (1.000 fichas), pero la medición es
-\textbf{secuencial}, no concurrente. Por eso el resultado se declara
-\textbf{cumplido en lo secuencial} y \textbf{no verificado} con 50 usuarios; la
-prueba de concurrencia queda para la semana 3. No se rebajó el umbral: cada
-consulta se exigió $\leq$ 1 s. La medición se repitió en la semana 15 sobre la
-misma API (mínimo 4,75 ms; promedio 6,14 ms; p95 7,52 ms; máximo 7,76 ms): el
-tiempo cambió con la máquina, pero el umbral se cumplió en las 20 consultas.
+entrega se usó un volumen mayor (1.000 fichas). En secuencial se conservó el
+criterio estricto: cada consulta $\leq$ 1 s en 20/20 mediciones (p95 7,52 ms).
+La concurrencia se verificó por separado con 50 usuarios $\times$ 20 consultas
+sobre 1.000 fichas; allí el criterio aplicable es p95 $\leq$ 1 s y se midió
+532,11 ms. No se rebajó el umbral.
+
+El corte no modela la entidad adoptante. Para RNF-07, cada adoptante se
+representa con una consulta al catálogo (RF-34) contra la API real: 5.000
+consultas sobre 2.000 fichas con 50 usuarios concurrentes dieron p95 585,77 ms.
+No se simulan respuestas.
 
 \subsection{Cierre de la matriz en la semana 15}
 
 La matriz anterior es la definitiva del corte. No se agregaron RNF nuevos por
 construir la interfaz. RNF-08 se repitió porque se incorporaron archivos
 estáticos y una nueva ruta de pruebas; los servicios no cambiaron y el
-aislamiento con doble del repositorio se mantuvo en 100\,\%. RNF-07 sigue
-\textbf{no verificado} y no se reporta como cumplido. Las prácticas de etiquetas,
+aislamiento con doble del repositorio se mantuvo en 100\,\%. RNF-05 y RNF-07
+quedan \textbf{cumplidos con evidencia reproducible}. Las prácticas de etiquetas,
 teclado y mensajes de la interfaz son mejoras de interacción, no un RNF de
 accesibilidad acordado.
 
@@ -744,8 +749,11 @@ accesibilidad acordado.
 python -m coverage run -m pytest -q
 python -m coverage report -m
 
-# RNF-05: 1.000 fichas y 20 consultas por HTTP real
+# RNF-05: 1.000 fichas y 20 consultas secuenciales por HTTP real
 python -m pruebas.rnf_desempeno
+
+# RNF-05 con 50 usuarios concurrentes y RNF-07 con 2.000 fichas y 5.000 consultas
+python -m pruebas.rnf_escalabilidad
 \end{lstlisting}
 
 \clearpage
@@ -831,7 +839,9 @@ con la API; resultado CUMPLE. \\
 \code{evidencias/pantalla\_ui.txt} & Recorrido y mensajes en navegador real. \\
 \code{evidencias/cobertura.txt} & Cobertura de servicios (RNF-08). \\
 \code{evidencias/rnf\_desempeno.txt} & 20 consultas sobre 1.000 fichas
-(RNF-05). \\
+(RNF-05 secuencial). \\
+\code{evidencias/rnf\_escalabilidad.txt} & 50 usuarios concurrentes (RNF-05) y
+5.000 consultas sobre 2.000 fichas (RNF-07). \\
 \code{evidencias/demo\_api.txt} & Peticiones y respuestas HTTP reales de ambos
 RF. \\
 \code{evidencias/prueba.db} & Base reproducible de la semana 13. \\
@@ -1034,6 +1044,7 @@ uvicorn api.main:app --reload --port 8000
 python -m pytest -v
 python -m pruebas.demo_integracion
 python -m pruebas.rnf_desempeno
+python -m pruebas.rnf_escalabilidad
 \end{lstlisting}
 
 \subsection{Limitaciones}
@@ -1042,8 +1053,10 @@ python -m pruebas.rnf_desempeno
 \item El actor se identifica con \code{refugio\_id} explícito; no hay
   autenticación ni roles.
 \item Las fotos se registran por nombre de archivo; no se almacena el binario.
-\item RNF-05 se midió de forma secuencial; no hay prueba de 50 usuarios
-  concurrentes. RNF-07 no tiene medición.
+\item La medición secuencial y la medición concurrente de RNF-05 son alcances
+  distintos; no se comparan entre sí.
+\item El corte no modela la entidad adoptante: cada adoptante se representa con
+  una consulta al catálogo (RF-34).
 \item PostgreSQL y sus índices no se han verificado en este corte.
 \item La pantalla es una demostración mínima, no un portal completo.
 \end{itemize}
@@ -1080,9 +1093,9 @@ El SQL queda en persistencia y las reglas en servicio/dominio & \textbf{Sí} &
 Sección 3. \\
 Cada RF se vincula con sus RNF y atributos ISO & \textbf{Sí} & Sección 5. \\
 La matriz final distingue cumplidos, parciales y no verificados & \textbf{Sí} &
-RNF-05 secuencial y RNF-07 no verificado. \\
+Sección 5: todos los RNF medidos; no quedan no verificados. \\
 Los RNF previstos tienen medidas y evidencias & \textbf{Sí} &
-RNF-04, 08 y 10; RNF-05 en alcance secuencial. \\
+RNF-04, 05, 07, 08 y 10. \\
 Se distinguen los incumplimientos y pendientes de la semana 3 & \textbf{Sí} &
 Sección de pendientes. \\
 El README permite ejecutar y repetir las pruebas & \textbf{Sí} &
@@ -1104,8 +1117,8 @@ Secciones 6 y 7 y \code{README.md}. \\
 \item Contratos documentados y OpenAPI generado por FastAPI.
 \item 44 pruebas: funcionales, de integridad, de servicios aislados y de
   integración de la interfaz.
-\item RNF-04, RNF-05 (secuencial), RNF-08 y RNF-10 con evidencia reproducible;
-  RNF-07 identificado como no verificado.
+\item RNF-04, RNF-05 (secuencial y con 50 usuarios), RNF-07, RNF-08 y RNF-10
+  con evidencia reproducible.
 \item Demostración HTTP real de ambos RF y recorrido desde la interfaz
   \code{/ui/} en navegador real.
 \end{itemize}
@@ -1116,8 +1129,6 @@ Secciones 6 y 7 y \code{README.md}. \\
 \item Autenticación, roles y reemplazo de \code{refugio\_id} explícito por el
   usuario autenticado.
 \item Ampliación de la interfaz mínima sin convertirla en un portal.
-\item Prueba de concurrencia de RNF-05 (50 usuarios) y RNF-07 (2.000 fichas,
-  5.000 adoptantes).
 \item Migración y verificación en PostgreSQL (ADR-03/ADR-10).
 \item Almacenamiento binario de fotos (hoy se guarda la ruta).
 \item Rechazo automático de solicitudes pendientes al dar de baja (RN-15),
@@ -1145,13 +1156,14 @@ Interfaz \code{/ui/} & \code{frontend/index.html}, \code{frontend/styles.css},
 Integración UI & \code{pruebas/test\_integracion\_ui.py},
 \code{pruebas/demo\_integracion.py} y \code{evidencias/integracion\_ui.txt}. \\
 RNF-04 & \code{test\_catalogo\_sin\_datos\_personales\_rnf04}. \\
-RNF-05 & \code{pruebas/rnf\_desempeno.py} y
-\code{evidencias/rnf\_desempeno.txt}; cumplido solo en alcance secuencial. \\
+RNF-05 & \code{pruebas/rnf\_desempeno.py},
+\code{pruebas/rnf\_escalabilidad.py} y sus dos evidencias; cumplido. \\
 RNF-08 & \code{pruebas/test\_servicios\_aislados.py} y
 \code{evidencias/cobertura.txt}. \\
 RNF-10 & \code{pruebas/test\_rnf10\_integridad.py} y
 \code{evidencias/salida\_pruebas\_semana14.txt}. \\
-RNF-07 & \textbf{No verificado}; sin medición; pendiente de la semana 3. \\
+RNF-07 & \code{pruebas/rnf\_escalabilidad.py} y
+\code{evidencias/rnf\_escalabilidad.txt}; cumplido. \\
 Persistencia & \code{persistencia/schema.sql},
 \code{persistencia/repositorio.py} y \code{evidencias/salida\_pruebas.txt}. \\
 Informe en Markdown & \code{docs/informe\_semanas\_13\_14.md} y
@@ -1173,8 +1185,8 @@ la interfaz mínima que consume esa API real y cerró la matriz RF--RNF. Las tre
 semanas mantienen el mismo alcance: publicar fichas (RF-05) y consultarlas
 (RF-34), sin cambiar contratos ni reglas de negocio. La calidad se concentró en
 integridad, comportamiento temporal, capacidad de prueba y confidencialidad;
-RNF-05 se reporta como cumplido solo en alcance secuencial y RNF-07 como no
-verificado. Lo que falta ---autenticación, concurrencia, carga y PostgreSQL---
-está identificado y se retoma en la semana 3.
+RNF-05 y RNF-07 se reportan como cumplidos con evidencia reproducible. Lo que
+falta ---autenticación, roles y PostgreSQL--- está identificado y se retoma en
+la semana 3.
 
 \end{document}

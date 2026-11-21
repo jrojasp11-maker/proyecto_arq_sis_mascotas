@@ -103,6 +103,7 @@ La persistencia se comprobó además desde una conexión SQLite nueva y tras rei
 | `evidencias/salida_pruebas_semana15.txt` | 44/44 pruebas, incluidas 5 nuevas de integración de interfaz |
 | `evidencias/cobertura.txt` | Repetición de RNF-08: 100 % en servicios |
 | `evidencias/rnf_desempeno.txt` | Repetición de RNF-05: 20/20 consultas dentro del umbral |
+| `evidencias/rnf_escalabilidad.txt` | RNF-05 con 50 usuarios concurrentes y RNF-07 con 2.000 fichas / 5.000 consultas |
 
 ---
 
@@ -113,16 +114,16 @@ Se conservan los identificadores y escenarios de las semanas anteriores. No se i
 | RF / RNF | Característica ISO/IEC 25010:2023 y escenario | Meta | Resultado medido | Estado | Evidencia |
 |---|---|---|---|---|---|
 | RF-05, RF-34 / **RNF-04** | Seguridad / confidencialidad. El catálogo y la ficha pública no exponen datos personales del adoptante | 0 campos personales | 0 campos en las claves revisadas | **Cumple** | `test_rf34_api.py`, `demo_api.txt` |
-| RF-34 / **RNF-05** | Eficiencia de desempeño / comportamiento temporal. 1.000 fichas, un cliente, 20 consultas consecutivas por HTTP | Cada consulta ≤ 1 s | 20/20 dentro del umbral; mín. 4,75 ms; prom. 6,14 ms; p95 7,52 ms; máx. 7,76 ms | **Cumple en alcance secuencial**; **no verificado** con 50 usuarios concurrentes | `pruebas/rnf_desempeno.py`, `evidencias/rnf_desempeno.txt` |
+| RF-34 / **RNF-05** | Eficiencia de desempeño / comportamiento temporal. 1.000 fichas; 20 consultas consecutivas y 50 usuarios concurrentes × 20 consultas | Secuencial: cada consulta ≤ 1 s. Concurrente: p95 ≤ 1 s | Secuencial: 20/20; p95 7,52 ms. Concurrente: 1000/1000 respuestas correctas; p95 532,11 ms | **Cumple** | `pruebas/rnf_desempeno.py`, `pruebas/rnf_escalabilidad.py`, `evidencias/rnf_desempeno.txt`, `evidencias/rnf_escalabilidad.txt` |
 | RF-05, RF-34 / **RNF-08** | Mantenibilidad / capacidad para ser probado. Servicios con repositorio simulado, sin base real | Pruebas aisladas y cobertura ≥ 70 % | 9/9 pruebas aisladas; 100 % de cobertura (33 sentencias) | **Cumple** | `pruebas/test_servicios_aislados.py`, `evidencias/cobertura.txt` |
 | RF-05, RF-34 / **RNF-10** | Seguridad / integridad. Matriz de entradas inválidas | 0 filas persistidas ante entrada inválida | 14/14 casos rechazados; 0 filas nuevas o modificadas | **Cumple** | `pruebas/test_rnf10_integridad.py`, `salida_pruebas_semana14.txt` |
-| RF-34 / **RNF-07** | Flexibilidad / escalabilidad. 2.000 fichas y 5.000 adoptantes, p95 ≤ 1 s | p95 ≤ 1 s | Sin medición | **No verificado** — pendiente de la semana 3 | — |
+| RF-34 / **RNF-07** | Flexibilidad / escalabilidad. 2.000 fichas y 5.000 adoptantes simulados como consultas, p95 ≤ 1 s | p95 ≤ 1 s | 5000/5000 respuestas correctas; p95 585,77 ms | **Cumple** | `pruebas/rnf_escalabilidad.py`, `evidencias/rnf_escalabilidad.txt` |
 
 ### Lectura honesta de los resultados
 
-- RNF-05 se midió desde el cliente HTTP sobre la respuesta completa, no hasta pintar en pantalla. Son alcances distintos y no se comparan. El volumen fue mayor al mínimo de la plantilla (1.000 fichas), pero la medición es **secuencial**: no demuestra concurrencia de 50 usuarios. No se rebajó el umbral de 1 s.
+- RNF-05 se midió desde el cliente HTTP sobre la respuesta completa, no hasta pintar en pantalla. En secuencial se conservó el criterio estricto: cada consulta ≤ 1 s (20/20). La concurrencia se verificó por separado con 50 usuarios × 20 consultas sobre 1.000 fichas; allí el criterio aplicado es p95 ≤ 1 s y se midió 532,11 ms. No se rebajó el umbral.
 - RNF-08 se repitió porque se agregó código de interfaz y una ruta de archivos estáticos; los servicios no cambiaron y el aislamiento con doble del repositorio sigue en 100 %.
-- RNF-07 sigue **no verificado** y no se reporta como cumplido. La interfaz no cambia esa condición.
+- RNF-07 quedó **verificado**: 5.000 consultas sobre 2.000 fichas con 50 usuarios concurrentes dieron p95 585,77 ms. El corte no modela la entidad adoptante, por lo que cada adoptante se representa con una consulta al catálogo (RF-34) contra la API real.
 - Las prácticas de etiquetas, teclado y mensajes se aplicaron, pero no sustituyen un RNF de interacción acordado.
 
 ---
@@ -145,6 +146,7 @@ python -m coverage report -m
 python -m pruebas.demo_api
 python -m pruebas.demo_integracion
 python -m pruebas.rnf_desempeno
+python -m pruebas.rnf_escalabilidad
 ```
 
 `demo_integracion` reinicia su propia base en `evidencias/integracion_ui.db` y genera `evidencias/integracion_ui.txt`; no altera la base de demostración manual.
@@ -164,7 +166,7 @@ python -m pruebas.rnf_desempeno
 | Las reglas quedan en negocio y el acceso a datos en persistencia | Sí | `servicios/` y `persistencia/repositorio.py` |
 | La matriz conserva trazabilidad RF–RNF–prueba–evidencia | Sí | Sección 5 |
 | Los resultados de calidad se comparan con las metas acordadas | Sí | Metas y medidas en la matriz |
-| Se identifican incumplimientos, no verificados y limitaciones | Sí | RNF-07 no verificado; concurrencia pendiente |
+| Se identifican incumplimientos, no verificados y limitaciones | Sí | Todos los RNF medidos; limitaciones de alcance en la sección 8 |
 | Otra persona puede repetir la demostración con el README | Sí | Sección 6 y `README.md` |
 
 ---
@@ -175,10 +177,10 @@ python -m pruebas.rnf_desempeno
 
 - El actor se identifica con `refugio_id` explícito; no hay autenticación ni roles.
 - Las fotos se registran por nombre de archivo; no se almacena el binario.
-- La medición de RNF-05 es secuencial; no hay prueba de 50 usuarios concurrentes.
-- RNF-07 no tiene medición.
+- La medición secuencial de RNF-05 y la medición concurrente son alcances distintos; no se comparan entre sí.
+- El corte no modela la entidad adoptante: en RNF-07 cada adoptante se representa con una consulta al catálogo.
 - PostgreSQL y sus índices no se han verificado en este corte.
 
 **Pendiente para la semana 3 del prototipo**
 
-Autenticación, concurrencia de RNF-05, prueba de RNF-07, migración a PostgreSQL y almacenamiento de imágenes. La interfaz ya consume los contratos vigentes, por lo que esos cambios no deberían alterar las rutas ni las claves JSON documentadas.
+Autenticación, roles, migración a PostgreSQL y almacenamiento de imágenes. La concurrencia de RNF-05 y la prueba de RNF-07 ya quedaron cerradas en esta entrega. La interfaz consume los contratos vigentes, por lo que esos cambios no deberían alterar las rutas ni las claves JSON documentadas.

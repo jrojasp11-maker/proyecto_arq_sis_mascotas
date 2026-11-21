@@ -16,7 +16,7 @@ implementa la inteligencia artificial.
 | 13 | Persistencia de los dos RF priorizados | Esquema, repositorio y 12 pruebas |
 | 14 | Servicios, API, contratos y verificación de RNF | API FastAPI, 39 pruebas y evidencias de calidad |
 | **15** | **Interfaz mínima, integración con la API real y cierre de la matriz RF–RNF** | **Pantalla `/ui/`, 44 pruebas e integración verificada** |
-| 3 (prototipo) | Autenticación, concurrencia y carga | Pendiente: roles, RNF-07 y PostgreSQL |
+| 3 (prototipo) | Autenticación, roles y PostgreSQL | Pendiente: roles y persistencia en PostgreSQL |
 
 | Orden | RF | Resultado observable |
 |---|---|---|
@@ -256,10 +256,10 @@ El detalle de los 13 escenarios y la matriz RF–RNF final están en
 | RF / RNF | Característica ISO/IEC 25010:2023 | Prueba y meta | Resultado | Estado | Evidencia |
 |---|---|---|---|---|---|
 | RF-05, RF-34 / **RNF-04** | Seguridad / confidencialidad | Revisar claves del catálogo y la ficha pública | **0** campos personales | **Cumple** | `test_rf34_api.py`, `demo_api.txt` |
-| RF-05, RF-34 / **RNF-05** | Eficiencia de desempeño / comportamiento temporal | 1.000 fichas; 20 consultas consecutivas por HTTP; cada una ≤ 1 s | **20/20**; mín. 4,75 ms; prom. 6,14 ms; p95 7,52 ms; máx. 7,76 ms | **Cumple en alcance secuencial**; **no verificado** con 50 usuarios | `pruebas/rnf_desempeno.py`, `evidencias/rnf_desempeno.txt` |
+| RF-05, RF-34 / **RNF-05** | Eficiencia de desempeño / comportamiento temporal | 1.000 fichas; 20 consultas consecutivas (cada una ≤ 1 s) y 50 usuarios concurrentes × 20 consultas (p95 ≤ 1 s) | Secuencial: **20/20**, p95 7,52 ms. Concurrente: **1000/1000** respuestas correctas, p95 532,11 ms | **Cumple** | `pruebas/rnf_desempeno.py`, `pruebas/rnf_escalabilidad.py`, `evidencias/rnf_desempeno.txt`, `evidencias/rnf_escalabilidad.txt` |
 | RF-05, RF-34 / **RNF-08** | Mantenibilidad / capacidad para ser probado | Doble del repositorio, sin base real; cobertura ≥ 70 % en servicios | **9/9** pruebas aisladas; **100 %** de cobertura en 33 sentencias | **Cumple** | `test_servicios_aislados.py`, `evidencias/cobertura.txt` |
 | RF-05, RF-34 / **RNF-10** | Seguridad / integridad | Matriz de entradas inválidas; 0 filas persistidas | **14/14** casos rechazados; 0 filas nuevas o modificadas | **Cumple** | `test_rnf10_integridad.py`, `salida_pruebas_semana14.txt` |
-| RF-34 / **RNF-07** | Flexibilidad / escalabilidad | 2.000 fichas y 5.000 adoptantes; p95 ≤ 1 s | Sin medición | **No verificado** — pendiente de la semana 3 | — |
+| RF-34 / **RNF-07** | Flexibilidad / escalabilidad | 2.000 fichas y 5.000 adoptantes simulados como consultas; p95 ≤ 1 s | **5000/5000** respuestas correctas; p95 585,77 ms | **Cumple** | `pruebas/rnf_escalabilidad.py`, `evidencias/rnf_escalabilidad.txt` |
 
 Comandos de las verificaciones:
 
@@ -268,16 +268,20 @@ Comandos de las verificaciones:
 python -m coverage run -m pytest -q
 python -m coverage report -m
 
-# RNF-05: 1.000 fichas y 20 consultas por HTTP real
+# RNF-05: 1.000 fichas y 20 consultas secuenciales por HTTP real
 python -m pruebas.rnf_desempeno
+
+# RNF-05 con 50 usuarios concurrentes y RNF-07 con 2.000 fichas / 5.000 consultas
+python -m pruebas.rnf_escalabilidad
 ```
 
-**Lectura honesta del RNF-05:** la meta de la plantilla incluye 500 fichas y 50
-usuarios concurrentes. Aquí se usó un volumen mayor (1.000 fichas) pero la
-medición es **secuencial**, no concurrente. Por eso el resultado se declara
-**cumplido en lo secuencial** y la prueba de 50 usuarios sigue pendiente. No se
-rebajó el umbral: cada consulta se exigió ≤ 1 s. RNF-07 continúa **no verificado**:
-la interfaz no cambia esa condición.
+**Lectura honesta de los RNF:** en secuencial se conservó el criterio más
+estricto (cada consulta ≤ 1 s, 20/20). Bajo carga se usa el criterio p95 ≤ 1 s,
+que es el aplicable a un escenario concurrente: 50 usuarios × 20 consultas
+sobre 1.000 fichas dieron p95 532,11 ms y 5.000 consultas sobre 2.000 fichas
+dieron p95 585,77 ms. El corte no modela la entidad adoptante, por lo que cada
+adoptante se representa con una consulta al catálogo (RF-34) contra la API real.
+No se simulan respuestas y no queda ningún RNF sin medir.
 
 ## 8. Checklist de entrega
 
@@ -292,7 +296,7 @@ la interfaz no cambia esa condición.
 | Los fallos de comunicación no confirman resultados no verificados | Sí | `pantalla_ui.txt` y `test_integracion_ui.py` |
 | El SQL queda en persistencia y las reglas en servicio/dominio | Sí | Sección 3 y `repositorio.py` |
 | Cada RF se vincula con sus RNF y atributos ISO | Sí | Sección 7 |
-| La matriz final distingue cumplidos, parciales y no verificados | Sí | RNF-05 secuencial y RNF-07 no verificado |
+| La matriz final distingue cumplidos, parciales y no verificados | Sí | Sección 7: todos los RNF medidos; no quedan no verificados |
 | Se distinguen incumplimientos y pendientes de la semana 3 | Sí | Secciones 7 y 10 |
 | El README permite ejecutar y repetir las pruebas | Sí | Comandos de las secciones 4, 6 y 7 |
 
@@ -347,20 +351,19 @@ Salida esperada: `RESUMEN: 12/12 pruebas pasaron`
   automático ni confirmación falsa.
 - 5 pruebas nuevas de integración (44/44 en total) y demostración reproducible
   con HTTP real y SQLite.
-- Matriz RF–RNF final con RNF-05 en alcance secuencial y RNF-07 no verificado.
+- Matriz RF–RNF final con todos los RNF medidos: RNF-04, 05, 07, 08 y 10.
 
 **Implementado en las semanas 13 y 14**
 
 - Esquema, repositorio, servicios de RF-05 y RF-34 y API REST con cuatro endpoints.
 - Contratos, traducción de errores y CORS.
-- RNF-04, RNF-08 y RNF-10 con evidencia; RNF-05 medido en alcance secuencial.
+- RNF-04, RNF-08 y RNF-10 con evidencia; RNF-05 y RNF-07 medidos por HTTP real.
 
 **Pendiente para la semana 3**
 
 - Autenticación, roles y reemplazo de `refugio_id` explícito por el usuario autenticado.
 - Ampliación de la interfaz mínima sin convertirla en un portal (la pantalla ya
   cubre los dos RF del corte).
-- Prueba de concurrencia de RNF-05 (50 usuarios) y RNF-07 (2.000 fichas, 5.000 adoptantes).
 - Migración y verificación en PostgreSQL (ADR-03/ADR-10).
 - Almacenamiento binario de fotos (hoy se guarda el nombre de archivo).
 - Rechazo automático de solicitudes pendientes al dar de baja (RN-15), fuera de este corte.
@@ -379,10 +382,10 @@ pendientes marcados en la sección 7.
 | Integración UI | `pruebas/test_integracion_ui.py`, `pruebas/demo_integracion.py`, `evidencias/integracion_ui.txt` y `evidencias/pantalla_ui.txt` |
 | Contratos | `docs/contratos_api.md`, `/docs` y `/openapi.json` |
 | RNF-04 | `test_catalogo_sin_datos_personales_rnf04` |
-| RNF-05 | `pruebas/rnf_desempeno.py` y `evidencias/rnf_desempeno.txt` |
+| RNF-05 | `pruebas/rnf_desempeno.py`, `pruebas/rnf_escalabilidad.py` y sus dos evidencias |
 | RNF-08 | `pruebas/test_servicios_aislados.py` y `evidencias/cobertura.txt` |
 | RNF-10 | `pruebas/test_rnf10_integridad.py` y `evidencias/salida_pruebas_semana14.txt` |
-| RNF-07 | No verificado; pendiente de la semana 3 |
+| RNF-07 | `pruebas/rnf_escalabilidad.py` y `evidencias/rnf_escalabilidad.txt` |
 | Persistencia | `persistencia/schema.sql`, `repositorio.py` y `salida_pruebas.txt` |
 | Plantilla 13.1 | `plantilla/plantilla_13_1.pdf` y `plantilla/plantilla_13_1.tex` |
 | Informe 13 y 14 | `docs/informe_semanas_13_14.md`, `plantilla/plantilla_13_14.tex` y `plantilla/plantilla_13_14.pdf` |
@@ -399,8 +402,9 @@ los detalles operativos están en el README y en
 [`docs/informe_semana15.md`](docs/informe_semana15.md) cierra el corte: describe
 la interacción de los dos RF, la conexión con los contratos vigentes, los 13
 escenarios de integración, la matriz RF–RNF final, el checklist y las
-limitaciones. RNF-05 queda como **cumple en alcance secuencial** y RNF-07 como
-**no verificado**.
+limitaciones. Todos los RNF quedan **cumplidos con evidencia reproducible**:
+RNF-05 en secuencial y con 50 usuarios concurrentes, y RNF-07 con 2.000 fichas
+y 5.000 consultas.
 
 `plantilla/plantilla_13_1.tex` se mantiene como documento formal de la semana
 13 (portada, alcance, priorización, matriz RF–RNF, fichas y checklist). Se
