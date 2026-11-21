@@ -23,6 +23,8 @@ Los dos requisitos funcionales priorizados se ejecutan desde una interfaz que co
 
 La interfaz se sirve desde la propia FastAPI en `/ui/`, en el **mismo origen** que la API. Por eso no fue necesario cambiar la configuración de CORS ni agregar dependencias de frontend.
 
+La pantalla se organiza en tres pestañas —**Crear ficha (RF-05)**, **Editar y baja (RF-05)** y **Consultar catálogo (RF-34)**— con navegación por teclado. El botón **Rellenar datos de ejemplo** carga automáticamente una ficha válida, los datos de edición y los filtros del catálogo para acelerar la demostración. El relleno no consulta ni simula la API: solo prepara los campos; el `id`, el estado y las filas visibles siguen viniendo del servidor.
+
 ```text
 Interfaz (/ui/)  →  API (/api/v1)  →  Servicio de aplicación  →  Repositorio  →  SQLite
 ```

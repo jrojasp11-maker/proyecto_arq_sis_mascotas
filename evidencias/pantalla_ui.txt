@@ -2,26 +2,65 @@ EVIDENCIA DE LA INTERFAZ EN NAVEGADOR REAL - SEMANA 15
 ==============================================================================
 Fecha: 20 de noviembre de 2026
 Navegador: Chromium integrado en OpenCode
-URL: http://127.0.0.1:8000/ui/
-API: http://127.0.0.1:8000/api/v1 (mismo origen, sin CORS adicional)
-Base: evidencias/api.db reiniciada con persistencia.inicializar_db
+URL: https://aqsis-corte-vertical.vercel.app/ui/ (recorrido principal)
+     http://127.0.0.1:8000/ui/ (rechazos, ausencia y fallo de comunicacion)
+API: mismo origen, sin CORS adicional
+Base: /tmp/aqsis_api.db efimera en Vercel; evidencias/api.db en el backend local
 Metodo: acciones realizadas sobre los controles de la pagina; se registran el
 mensaje visible y, cuando aplica, las filas de la tabla y las peticiones HTTP
 capturadas por el navegador.
 
-------------------------------------------------------------------------------
-RF-34 | consulta inicial del catalogo
-------------------------------------------------------------------------------
-API HTTP 200: total 3, pagina 1, 3 mascota(s) mostrada(s). Datos recuperados del servidor.
-ids=1,3,2
-Orden observado: Luna, Rocky, Milo (fecha_publicacion ascendente, desempate por id).
+Nota (despliegue): este recorrido corresponde a la version con pestanas y
+relleno automatico publicada en https://aqsis-corte-vertical.vercel.app/ui/ .
+La seccion de errores y rechazos se reprodujo con el backend local porque una
+instancia de Vercel usa una base efimera en /tmp y no permite detener el servidor
+desde el navegador.
 
 ------------------------------------------------------------------------------
-RF-05 | crear ficha desde el formulario
+UI | organizacion y relleno automatico
+------------------------------------------------------------------------------
+Pestanas visibles: 1. Crear ficha (RF-05), 2. Editar y baja (RF-05),
+3. Consultar catálogo (RF-34). Solo un panel queda visible a la vez.
+Boton "Rellenar datos de ejemplo": al pulsarlo se cargo nombre=Nala,
+especie=perro, fecha=2026-11-20, tamano=mediano, energia=media y el filtro
+especie=perro; el mensaje fue "Ejemplo listo: cree la ficha, use el id
+devuelto y consulte el catalogo." No se registro ninguna peticion HTTP por
+el relleno: solo prepara campos, no simula respuestas.
+Navegacion por teclado: al pulsar la pestaña "Editar y baja" quedo activa
+tab-editar; ArrowRight llevo a tab-catalogo y Home volvio a tab-crear.
+
+------------------------------------------------------------------------------
+RF-05 | crear ficha desde el formulario (produccion Vercel)
 ------------------------------------------------------------------------------
 Ficha creada por la API con id 7, estado 'disponible' y 2 fotografias.
 El id ya esta listo para editar o dar de baja.
 El campo "Id de la ficha" quedo con el valor real devuelto: 7.
+Peticion observada: POST 201 /api/v1/mascotas.
+
+------------------------------------------------------------------------------
+RF-05 | editar con el id real (produccion Vercel)
+------------------------------------------------------------------------------
+Ficha 7 actualizada por la API. Nombre actual: 'Nala actualizada'; estado:
+'disponible'. Se uso el boton "Ir a editar / baja" y despues el boton
+"Actualizar nombre". Peticion observada: PUT 200 /api/v1/mascotas/7.
+
+------------------------------------------------------------------------------
+RF-34 | consulta desde la pestaña de catalogo (produccion Vercel)
+------------------------------------------------------------------------------
+Se uso el boton "Ir al catálogo", se mantuvo el filtro rellenado
+(especie=perro, tamano=mediano) y se pulso "Consultar catálogo".
+API HTTP 200: total 2, pagina 1, 2 mascota(s) mostrada(s). Datos recuperados
+del servidor. Peticion observada: GET 200
+/api/v1/mascotas?especie=perro&tamano=mediano&pagina=1&por_pagina=20.
+Tras pulsar de nuevo "Consultar catálogo" se repitio el mismo resultado, lo que
+confirma que la respuesta se vuelve a recuperar del servidor.
+
+------------------------------------------------------------------------------
+RF-34 | consulta inicial del catalogo (backend local)
+------------------------------------------------------------------------------
+API HTTP 200: total 3, pagina 1, 3 mascota(s) mostrada(s). Datos recuperados del servidor.
+ids=1,3,2
+Orden observado: Luna, Rocky, Milo (fecha_publicacion ascendente, desempate por id).
 
 ------------------------------------------------------------------------------
 RF-34 | consulta despues de recargar la pagina
@@ -30,11 +69,6 @@ API HTTP 200: total 4, pagina 1, 4 mascota(s) mostrada(s). Datos recuperados del
 ids=1,3,2,7
 La ficha 7 aparece despues de la recarga: el resultado no depende de la memoria
 del navegador.
-
-------------------------------------------------------------------------------
-RF-05 | editar con el id real
-------------------------------------------------------------------------------
-Ficha 7 actualizada por la API. Nombre actual: 'Nala actualizada'; estado: 'disponible'.
 
 ------------------------------------------------------------------------------
 RF-05 | dar de baja
@@ -91,7 +125,16 @@ Backend detenido, accion Crear ficha:
   Nombre conservado: Nala; boton habilitado; sin confirmacion de creacion.
 
 ------------------------------------------------------------------------------
-Peticiones HTTP capturadas por el navegador (registro de la ultima carga)
+Peticiones HTTP capturadas por el navegador (produccion Vercel)
+------------------------------------------------------------------------------
+POST 201  /api/v1/mascotas
+PUT 200   /api/v1/mascotas/7
+PUT 200   /api/v1/mascotas/7
+GET 200   /api/v1/mascotas?especie=perro&tamano=mediano&pagina=1&por_pagina=20
+Sin errores de JavaScript en la consola. Auditoria Lighthouse sobre la URL de
+produccion: accesibilidad 1.00, buenas practicas 1.00 y SEO 1.00, sin fallos.
+
+Peticiones HTTP capturadas por el navegador (backend local)
 ------------------------------------------------------------------------------
 GET 200   /api/v1/mascotas?pagina=1&por_pagina=20
 PUT 200   /api/v1/mascotas/7

@@ -882,6 +882,20 @@ cita; aquí RF-34 es un catálogo, por lo que la verificación tras recargar se
 hace volviendo a consultar y comprobando que el \code{id} creado aparece en la
 respuesta del servidor.
 
+\subsection{Organización por pestañas y relleno de ejemplo}
+
+La pantalla se divide en tres pestañas con navegación por teclado:
+\emph{Crear ficha} (RF-05), \emph{Editar y baja} (RF-05) y
+\emph{Consultar catálogo} (RF-34). Cada pestaña contiene solo los controles de
+su caso de uso y se enlaza con las siguientes mediante los botones ``Ir a
+editar / baja'' e ``Ir al catálogo''. El botón \textbf{Rellenar datos de ejemplo}
+precarga una ficha válida, el refugio dueño, el nombre de edición y los filtros
+del catálogo para mostrar el recorrido sin digitar datos. Este relleno es solo
+presentación: no llama a la API, no simula respuestas y no aplica reglas de
+negocio; el \code{id}, el estado y las filas siguen siendo devueltos por el
+servidor. La evidencia \code{evidencias/integracion\_ui.txt} registra que las
+pestañas y el relleno están presentes en los archivos servidos.
+
 \subsection{Interacción, estados y mensajes}
 
 {\footnotesize
@@ -1053,6 +1067,9 @@ Los contratos describen éxito, entrada inválida y errores & \textbf{Sí} &
 \code{docs/contratos\_api.md} y \code{/docs}. \\
 La interfaz ejecuta ambos RF contra la API real & \textbf{Sí} &
 \code{/ui/} y \code{evidencias/pantalla\_ui.txt}. \\
+La pantalla organiza los RF en pestañas y ofrece relleno de ejemplo &
+\textbf{Sí} & \code{frontend/index.html}, \code{frontend/app.js} e
+\code{integracion\_ui.txt}. \\
 Hay resultado válido y rechazo/ausencia por cada RF & \textbf{Sí} &
 Secciones 4 y 7. \\
 Se verifica la persistencia real y la ausencia de escrituras indebidas &

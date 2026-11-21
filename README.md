@@ -137,6 +137,13 @@ uvicorn api.main:app --reload --port 8000
 - Documentación interactiva: `http://127.0.0.1:8000/docs`
 - OpenAPI: `http://127.0.0.1:8000/openapi.json`
 
+La pantalla está organizada en tres pestañas —**Crear ficha (RF-05)**,
+**Editar y baja (RF-05)** y **Consultar catálogo (RF-34)**— y tiene un botón
+**Rellenar datos de ejemplo** que carga automáticamente una ficha válida, los
+datos de edición y los filtros del catálogo. El relleno solo prepara los campos:
+no llama a la API ni simula respuestas; cada resultado sigue viniendo del
+servidor. Tras crear, el `id` real queda listo en la pestaña de edición.
+
 Variables de entorno:
 
 | Variable | Valor por defecto | Uso |
@@ -332,6 +339,8 @@ Salida esperada: `RESUMEN: 12/12 pruebas pasaron`
 
 - Interfaz mínima en `/ui/` para crear, editar, dar de baja y consultar, servida
   por FastAPI en el mismo origen que la API.
+- Pantalla organizada por pestañas (crear, editar/baja y catálogo) con relleno
+  automático de ejemplo para demostrar los dos RF sin digitar datos.
 - Manejo de estados, rechazos y ausencia con mensajes comprensibles; entradas
   conservadas y controles operables con teclado.
 - Fallos `5xx` y de `fetch` tratados como comunicación incierta: sin reintento
