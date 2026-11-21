@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Corte vertical de adopcion responsable de mascotas: RF-05 y RF-34 desde la API real.">
   <title>Corte vertical — Adopción responsable de mascotas</title>
   <link rel="stylesheet" href="/ui/styles.css">
 </head>
@@ -10,16 +11,26 @@
   <header>
     <h1>Adopción responsable de mascotas</h1>
     <p>Interfaz mínima del corte vertical: RF-05 (ficha) y RF-34 (catálogo). Consume la API real en <code>/api/v1</code>.</p>
+    <div class="barra-demo">
+      <button id="btn-rellenar" type="button" class="secundario">Rellenar datos de ejemplo</button>
+      <span id="estado-demo" class="estado" role="status" aria-live="polite"></span>
+    </div>
   </header>
 
   <main>
-    <section aria-labelledby="titulo-rf05">
-      <h2 id="titulo-rf05">RF-05 — Gestionar la ficha de una mascota</h2>
+    <div class="pestanas" role="tablist" aria-label="Funciones del corte vertical">
+      <button id="tab-crear" type="button" role="tab" aria-controls="panel-crear" aria-selected="true" tabindex="0">1. Crear ficha (RF-05)</button>
+      <button id="tab-editar" type="button" role="tab" aria-controls="panel-editar" aria-selected="false" tabindex="-1">2. Editar y baja (RF-05)</button>
+      <button id="tab-catalogo" type="button" role="tab" aria-controls="panel-catalogo" aria-selected="false" tabindex="-1">3. Consultar catálogo (RF-34)</button>
+    </div>
+
+    <section id="panel-crear" class="panel" role="tabpanel" aria-labelledby="tab-crear">
+      <h2 id="titulo-rf05">RF-05 — Crear ficha</h2>
 
       <form id="form-crear" novalidate>
         <fieldset>
           <legend>Crear ficha</legend>
-          <p class="ayuda">Los campos marcados con <strong>*</strong> son obligatorios. El backend decide el estado final.</p>
+          <p class="ayuda">Los campos marcados con <strong>*</strong> son obligatorios. El backend decide el estado final. Use <strong>Rellenar datos de ejemplo</strong> para cargar una ficha válida en un clic.</p>
 
           <div class="rejilla">
             <label for="refugio_id">Refugio que publica *</label>
@@ -85,11 +96,16 @@
 
           <div class="acciones">
             <button id="btn-crear" type="submit">Crear ficha</button>
+            <button id="btn-ir-editar" type="button" class="secundario">Ir a editar / baja</button>
             <span id="estado-crear" class="estado" role="status" aria-live="polite"></span>
           </div>
           <p id="resultado-crear" class="mensaje" role="status" aria-live="polite"></p>
         </fieldset>
       </form>
+    </section>
+
+    <section id="panel-editar" class="panel" role="tabpanel" aria-labelledby="tab-editar" hidden>
+      <h2 id="titulo-rf05-editar">RF-05 — Editar y dar de baja</h2>
 
       <form id="form-editar" novalidate>
         <fieldset>
@@ -111,6 +127,7 @@
           <div class="acciones">
             <button id="btn-editar" type="button">Actualizar nombre</button>
             <button id="btn-baja" type="button">Dar de baja</button>
+            <button id="btn-ir-catalogo" type="button" class="secundario">Ir al catálogo</button>
             <span id="estado-editar" class="estado" role="status" aria-live="polite"></span>
           </div>
           <p id="resultado-editar" class="mensaje" role="status" aria-live="polite"></p>
@@ -118,7 +135,7 @@
       </form>
     </section>
 
-    <section aria-labelledby="titulo-rf34">
+    <section id="panel-catalogo" class="panel" role="tabpanel" aria-labelledby="tab-catalogo" hidden>
       <h2 id="titulo-rf34">RF-34 — Consultar el catálogo</h2>
       <form id="form-catalogo" novalidate>
         <fieldset>

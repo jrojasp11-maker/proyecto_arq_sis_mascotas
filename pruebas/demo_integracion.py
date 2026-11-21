@@ -89,6 +89,23 @@ def main() -> int:
             lineas.append(
                 "UI | controles: form-crear, form-catalogo, btn-editar, btn-baja, btn-consultar"
             )
+            pestanas = all(
+                f'id="tab-{nombre}"' in pagina.text
+                and f'id="panel-{nombre}"' in pagina.text
+                for nombre in ("crear", "editar", "catalogo")
+            )
+            relleno = (
+                'id="btn-rellenar"' in pagina.text
+                and "function rellenarDemo" in js.text
+                and "function activarPestana" in js.text
+            )
+            chequear(pestanas, "las pestañas de RF-05 y RF-34 no estan en la pagina")
+            chequear(relleno, "el relleno automatico de ejemplo no esta disponible")
+            lineas.append(
+                "UI | pestanas: crear / editar / catalogo "
+                f"({'presentes' if pestanas else 'AUSENTES'}); "
+                f"relleno automatico: {'presente' if relleno else 'AUSENTE'}"
+            )
             lineas.append("")
 
             antes = contar("mascota")

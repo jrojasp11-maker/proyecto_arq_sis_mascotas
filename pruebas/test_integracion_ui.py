@@ -40,10 +40,20 @@ def test_interfaz_muestra_controles_estados_y_mensajes(cliente):
     assert "role=\"status\"" in pagina
     assert "Fotografías (nombres separados por coma; 0 a 5)" in pagina
 
+    # Organizacion por pestañas y relleno automatico de ejemplo.
+    assert 'role="tablist"' in pagina
+    for pestana in ("tab-crear", "tab-editar", "tab-catalogo"):
+        assert 'id="' + pestana + '"' in pagina
+    for panel in ("panel-crear", "panel-editar", "panel-catalogo"):
+        assert 'id="' + panel + '"' in pagina
+    assert 'id="btn-rellenar"' in pagina
+    assert "Rellenar datos de ejemplo" in pagina
+
     javascript = cliente.get("/ui/app.js").text
     for texto in (
         "Enviando...", "Consultando...", "rechazo HTTP",
         "no se pudo contactar", "el servidor no esta disponible",
+        "function activarPestana", "function rellenarDemo", "btn-rellenar",
     ):
         assert texto in javascript
 

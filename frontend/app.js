@@ -370,3 +370,71 @@ porId("form-editar").addEventListener("submit", function (evento) { evento.preve
 porId("form-catalogo").addEventListener("submit", consultarCatalogo);
 porId("btn-editar").addEventListener("click", editarFicha);
 porId("btn-baja").addEventListener("click", darDeBaja);
+
+/* Pestañas y relleno de ejemplo: solo presentacion, sin reglas de negocio. */
+const pestanas = ["crear", "editar", "catalogo"];
+
+function activarPestana(nombre) {
+  pestanas.forEach(function (nombrePestana) {
+    const activa = nombrePestana === nombre;
+    porId("tab-" + nombrePestana).setAttribute("aria-selected", activa ? "true" : "false");
+    porId("tab-" + nombrePestana).tabIndex = activa ? 0 : -1;
+    porId("panel-" + nombrePestana).hidden = !activa;
+  });
+}
+
+function rellenarDemo() {
+  const ejemplo = {
+    refugio_id: "1",
+    nombre: "Nala",
+    raza: "Mestiza",
+    especie: "perro",
+    edad_meses: "24",
+    tamano: "mediano",
+    nivel_energia: "media",
+    experiencia_requerida: "basica",
+    fecha_publicacion: "2026-11-20",
+    fotografias: "nala_01.jpg, nala_02.jpg",
+    historial_salud: "Vacunas al día",
+    historial_comportamiento: "Sociable",
+  };
+  Object.keys(ejemplo).forEach(function (id) { porId(id).value = ejemplo[id]; });
+  porId("apta_con_menores").checked = true;
+  porId("apta_con_mascotas").checked = true;
+  porId("id-editar").value = "";
+  porId("refugio-editar").value = "1";
+  porId("nombre-editar").value = "Nala actualizada";
+  porId("filtro-especie").value = "perro";
+  porId("filtro-tamano").value = "mediano";
+  porId("filtro-edad-min").value = "";
+  porId("filtro-edad-max").value = "";
+  porId("filtro-pagina").value = "1";
+  porId("filtro-por-pagina").value = "20";
+  mensaje("resultado-crear", "", "");
+  mensaje("resultado-editar", "", "");
+  mensaje("resultado-catalogo", "", "");
+  limpiarCatalogo();
+  estado("estado-demo", "Ejemplo listo: cree la ficha, use el id devuelto y consulte el catalogo.");
+  activarPestana("crear");
+}
+
+pestanas.forEach(function (nombre, indice) {
+  const tab = porId("tab-" + nombre);
+  tab.addEventListener("click", function () { activarPestana(nombre); });
+  tab.addEventListener("keydown", function (evento) {
+    let destino = null;
+    if (evento.key === "ArrowRight") destino = (indice + 1) % pestanas.length;
+    if (evento.key === "ArrowLeft") destino = (indice - 1 + pestanas.length) % pestanas.length;
+    if (evento.key === "Home") destino = 0;
+    if (evento.key === "End") destino = pestanas.length - 1;
+    if (destino !== null) {
+      evento.preventDefault();
+      activarPestana(pestanas[destino]);
+      porId("tab-" + pestanas[destino]).focus();
+    }
+  });
+});
+
+porId("btn-rellenar").addEventListener("click", rellenarDemo);
+porId("btn-ir-editar").addEventListener("click", function () { activarPestana("editar"); });
+porId("btn-ir-catalogo").addEventListener("click", function () { activarPestana("catalogo"); });
