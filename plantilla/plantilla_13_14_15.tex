@@ -1,0 +1,1163 @@
+% !TEX program = pdflatex
+% =====================================================================
+%  Informe de las semanas 13, 14 y 15
+%  Persistencia, servicios, API e interfaz del corte vertical (RF-05 y RF-34)
+%  Arquitectura de Sistemas I
+%  Compilar en Overleaf con pdfLaTeX
+% =====================================================================
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{newtxtext,newtxmath}
+\usepackage{newtxtt}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage[a4paper,top=2.4cm,bottom=2.2cm,left=2.5cm,right=2.5cm,headheight=14pt,headsep=6mm,footskip=10mm]{geometry}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{enumitem}
+\usepackage{microtype}
+\usepackage{listings}
+\usepackage{hyperref}
+
+% ---------------------------------------------------------------------
+% Encabezado y pie
+% ---------------------------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+\fancyhead[L]{\small\scshape Arquitectura de Sistemas I}
+\fancyhead[R]{\small\scshape Semanas 13, 14 y 15}
+\fancyfoot[C]{\small Página \thepage\ de \pageref{LastPage}}
+
+% ---------------------------------------------------------------------
+% Títulos
+% ---------------------------------------------------------------------
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.6em}{}
+\titlespacing*{\section}{0pt}{3.0ex plus .5ex minus .2ex}{1.2ex}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection.}{0.6em}{}
+\titlespacing*{\subsection}{0pt}{2.2ex plus .4ex minus .2ex}{0.9ex}
+
+% ---------------------------------------------------------------------
+% Párrafos, listas y tablas
+% ---------------------------------------------------------------------
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.45em}
+\setlength{\tabcolsep}{4pt}
+\renewcommand{\arraystretch}{1.1}
+\setlength{\emergencystretch}{2em}
+\raggedbottom
+
+\setlist[itemize]{leftmargin=1.4em,itemsep=1pt,topsep=3pt,parsep=0pt}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{A}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\newcolumntype{V}[1]{>{\hsize=#1\hsize\raggedright\arraybackslash}X}
+\newcolumntype{Z}[1]{>{\hsize=#1\hsize\centering\arraybackslash}X}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\thead}[1]{\textbf{#1}}
+\newcommand{\pass}[1]{\textbf{#1}}
+\newcommand{\pend}[1]{\textit{#1}}
+
+\lstset{
+  basicstyle=\ttfamily\scriptsize,
+  frame=lines,
+  framerule=0.4pt,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false,
+  breaklines=true,
+  extendedchars=true,
+  inputencoding=utf8,
+  literate={á}{{\'a}}1 {é}{{\'e}}1 {í}{{\'i}}1 {ó}{{\'o}}1 {ú}{{\'u}}1
+           {Á}{{\'A}}1 {É}{{\'E}}1 {Í}{{\'I}}1 {Ó}{{\'O}}1 {Ú}{{\'U}}1
+           {ñ}{{\~n}}1 {Ñ}{{\~N}}1 {ü}{{\"u}}1 {Ü}{{\"U}}1
+           {¿}{{?`}}1 {¡}{{!`}}1,
+  aboveskip=6pt,
+  belowskip=6pt
+}
+
+\hypersetup{
+  hidelinks,
+  pdftitle={Informe de las semanas 13, 14 y 15 - Corte vertical},
+  pdfsubject={Persistencia, servicios, API e interfaz de RF-05 y RF-34},
+  pdfauthor={Arquitectura de Sistemas I - Universidad Central}
+}
+
+\begin{document}
+
+% =====================================================================
+% Portada
+% =====================================================================
+\begin{titlepage}
+\centering
+\vspace*{1.0cm}
+
+{\scshape\Large Universidad Central\par}
+\vspace{0.25cm}
+{\scshape\large Arquitectura de Sistemas I\par}
+
+\vspace{2.2cm}
+{\Huge\bfseries Informe de las semanas 13, 14 y 15\par}
+\vspace{0.45cm}
+{\LARGE Persistencia, servicios, API e interfaz del corte vertical\par}
+\vspace{0.35cm}
+{\Large\itshape Proyecto Arquitectura de Sistemas\par}
+\vspace{0.15cm}
+{\large Adopción responsable de mascotas\par}
+
+\vspace{2.2cm}
+{\normalsize
+\begin{tabular}{@{}l@{\hspace{6mm}}>{\raggedright\arraybackslash}p{9.2cm}@{}}
+\textbf{Proyecto:} & Sistema de Apoyo a la Decisión para la Adopción Responsable de Mascotas mediante Inteligencia Artificial \\[3mm]
+\textbf{Docente:} & Elias Buitrago Bolivar \\[3mm]
+\textbf{Integrantes:} & Juan Diego Rojas y Adrián Camaño \\[3mm]
+\textbf{Fecha:} & 20 de noviembre de 2026 \\[3mm]
+\textbf{Estado:} & 12/12, 39/39 y 44/44 pruebas; integración verificada \\
+\end{tabular}}
+
+\vfill
+{\small Semanas 13, 14 y 15 \textperiodcentered\ 2026\par}
+\end{titlepage}
+
+% =====================================================================
+% 1. Resumen
+% =====================================================================
+\section{Resumen de la entrega}
+
+Este documento reúne el trabajo de las semanas 13, 14 y 15 sobre el mismo corte
+vertical. La semana 13 construyó la base de datos y la capa de persistencia; la
+semana 14 agregó los servicios de aplicación, la API REST, los contratos y la
+verificación de los requisitos no funcionales; la semana 15 incorporó la interfaz
+mínima que consume la API real y cerró la matriz RF--RNF. Las tres semanas
+conservan los mismos dos requisitos funcionales priorizados.
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}V{0.35}V{1.0}V{1.0}V{1.65}@{}}
+\toprule
+\thead{Semana} & \thead{Trabajo realizado} & \thead{Resultado} & \thead{Evidencia} \\ \midrule
+\textbf{13} & Esquema, reglas de integridad, repositorio y datos de prueba &
+12/12 pruebas de persistencia & \code{evidencias/salida\_pruebas.txt} \\
+\textbf{14} & Servicios, API FastAPI, contratos, pruebas funcionales y RNF &
+39/39 pruebas; 100\,\% de cobertura en servicios &
+\code{salida\_pruebas\_semana14.txt}, \code{cobertura.txt},
+\code{rnf\_desempeno.txt} y \code{demo\_api.txt} \\
+\textbf{15} & Interfaz mínima, integración con la API real y cierre RF--RNF &
+44/44 pruebas; 13 escenarios de integración &
+\code{salida\_pruebas\_semana15.txt}, \code{integracion\_ui.txt},
+\code{pantalla\_ui.txt} e \code{informe\_semana15.md} \\
+\bottomrule
+\end{tabularx}
+}
+
+\vspace{1mm}
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}V{0.3}V{1.2}V{1.5}@{}}
+\toprule
+\thead{Orden} & \thead{Requisito funcional} & \thead{Resultado observable} \\ \midrule
+1 & \textbf{RF-05 --- Gestión de la ficha de mascota} &
+El refugio crea, edita y da de baja una ficha; recibe su identificador y su
+estado (\emph{incompleta} o \emph{disponible}). \\
+2 & \textbf{RF-34 --- Consulta del catálogo} &
+El adoptante lista las mascotas disponibles con filtros por especie, tamaño y
+edad, con paginación y orden estable. \\
+\bottomrule
+\end{tabularx}
+}
+
+\textbf{Stack:} Python 3.12.10, FastAPI 0.162.2, Pydantic v2, Uvicorn 0.54.0 y
+SQLite 3.49.1. La interfaz es HTML, CSS y JavaScript servidos por la propia
+FastAPI en \code{/ui/}, sin framework adicional. SQLite se usa para reproducir
+el corte sin instalar un servidor; la base objetivo del proyecto sigue siendo
+PostgreSQL (ADR-03/ADR-10).
+
+% =====================================================================
+% 2. Contexto
+% =====================================================================
+\section{Contexto y alcance}
+
+\subsection{El caso de estudio}
+
+El sistema nace en la asignatura \emph{Práctica de Ingeniería}. Los refugios
+registran las fichas de los animales que tienen en adopción y los adoptantes
+consultan ese catálogo para encontrar una mascota compatible con su hogar. En
+\textbf{Arquitectura de Sistemas I} se retoma como caso real para aplicar
+decisiones de arquitectura; no se construye el sistema completo, sino un
+\textbf{corte vertical}.
+
+Un corte vertical es una porción pequeña del sistema que se construye de punta a
+punta. En este proyecto avanza en tres momentos: la semana 13 cubre la base de
+datos y la persistencia; la semana 14, los servicios y la API; la semana 15, la
+interfaz mínima y el cierre de la matriz RF--RNF. La semana 3 del prototipo
+retoma autenticación, concurrencia y carga.
+
+\subsection{Los dos requisitos funcionales}
+
+\begin{itemize}
+\item \textbf{RF-05.} El refugio crea, edita y da de baja la ficha de una
+  mascota. La ficha incluye especie, raza aproximada, edad, tamaño, nivel de
+  energía, historial de salud y comportamiento, experiencia requerida, aptitud
+  para convivir con menores y otras mascotas, y de 1 a 5 fotografías.
+\item \textbf{RF-34.} El adoptante consulta el catálogo de mascotas disponibles
+  y lo filtra por especie, tamaño y rango de edad, con paginación y orden por
+  fecha de publicación.
+\end{itemize}
+
+Se eligieron porque \textbf{RF-05 produce la información y RF-34 la consume}.
+Juntos forman el recorrido mínimo del negocio ---publicar una mascota y
+consultarla--- y comparten las tablas \emph{refugio}, \emph{mascota} y
+\emph{fotografia}.
+
+\subsection{Reglas de negocio del corte}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}V{0.4}V{1.7}V{0.9}@{}}
+\toprule
+\thead{Regla} & \thead{Enunciado} & \thead{Dónde se aplica} \\ \midrule
+\textbf{RN-22} & Una ficha está completa cuando tiene los campos obligatorios y
+entre 1 y 5 fotos JPG/PNG; solo entonces pasa a \emph{disponible}. &
+Repositorio, triggers y API \\
+\textbf{RN-03} & Solo un refugio verificado puede publicar fichas. &
+Repositorio y API (ERR-009) \\
+\textbf{RN-15} & Una ficha adoptada o dada de baja no aparece en el catálogo. &
+Filtro del catálogo y baja lógica \\
+\bottomrule
+\end{tabularx}
+}
+
+\subsection{Fuera del alcance}
+
+Autenticación y roles, interfaz web completa, almacenamiento binario de fotos,
+motor de recomendaciones, solicitudes y decisiones de adopción, seguimiento
+posadopción, notificaciones, indicadores, chatbot y reconocimiento de imágenes.
+La interfaz de la semana 15 es una pantalla mínima para ejecutar los dos RF, no
+un portal. La migración definitiva a PostgreSQL se hará al cerrar el prototipo.
+
+\clearpage
+
+% =====================================================================
+% 3. Semana 13
+% =====================================================================
+\section{Semana 13 --- Base de datos y persistencia}
+
+\subsection{Modelo mínimo de datos}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}V{0.55}V{0.55}V{1.95}V{1.0}V{0.95}@{}}
+\toprule
+\thead{Entidad} & \thead{Clave} & \thead{Campos principales} & \thead{Relación} & \thead{RF} \\ \midrule
+\textbf{refugio} & id (PK) & nombre, localidad, estado\_verificacion
+(pendiente, verificado, rechazado) & 1 : N con mascota & RF-05, RF-34 \\
+\textbf{mascota} & id (PK) & refugio\_id (FK), nombre, raza, especie,
+edad\_meses, tamano, nivel\_energia, experiencia\_requerida,
+apta\_con\_menores, apta\_con\_mascotas, historial\_salud,
+historial\_comportamiento, estado, fecha\_publicacion &
+N : 1 con refugio; 1 : N con fotografia & RF-05, RF-34 \\
+\textbf{fotografia} & id (PK) & mascota\_id (FK), archivo, orden (1 a 5) &
+N : 1 con mascota; UNIQUE (mascota\_id, orden) & RF-05, RF-34 \\
+\bottomrule
+\end{tabularx}
+}
+
+El esquema se recrea desde cero con \code{persistencia/schema.sql} y
+\code{persistencia/seed.sql}. La base de la semana 13 vive en
+\code{evidencias/prueba.db} y no se modifica desde la API.
+
+\subsection{Integridad y separación de capas}
+
+\noindent
+\begin{minipage}[t]{0.49\linewidth}
+\begin{itemize}
+\item \textbf{Llaves foráneas} de refugio a mascota y de mascota a fotografia,
+  con borrado en cascada de las fotos.
+\item \textbf{CHECK} de dominios cerrados: especie, tamaño, energía,
+  experiencia y estado; edad entre 0 y 300 meses.
+\item \textbf{UNIQUE} en (mascota\_id, orden) y trigger que impide más de cinco
+  fotos.
+\item \textbf{Triggers de publicación:} una ficha solo pasa a disponible si
+  tiene al menos una foto y el refugio está verificado (RN-03 y RN-22).
+\end{itemize}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.49\linewidth}
+\begin{itemize}
+\item \textbf{Transacciones} con \emph{BEGIN IMMEDIATE} y \emph{ROLLBACK} ante
+  error.
+\item \textbf{Repositorio único:} todo el SQL está en
+  \code{persistencia/repositorio.py}; los servicios y la API no construyen
+  consultas.
+\item \textbf{Catálogo:} solo fichas disponibles de refugios verificados, sin
+  datos personales del adoptante.
+\item \textbf{Datos de fotos:} en este corte se guarda la ruta del archivo; el
+  binario se incorporará más adelante.
+\end{itemize}
+\end{minipage}
+
+\subsection{Contrato del repositorio}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}V{1.0}V{0.95}V{1.15}V{0.9}@{}}
+\toprule
+\thead{Operación} & \thead{Entrada} & \thead{Resultado} & \thead{Uso} \\ \midrule
+\code{crear\_ficha} & refugio\_id, ficha de RN-22, 0--5 fotos &
+id real; estado incompleta o disponible & RF-05: persistir y devolver el
+identificador. \\
+\code{obtener\_por\_id} & mascota\_id & ficha con refugio y fotos, o None &
+RF-05: verificar el registro; representar la ausencia. \\
+\code{actualizar\_ficha} & mascota\_id, refugio\_id, cambios, fotos opcionales &
+ficha actualizada y estado recalculado & RF-05: editar y volver a publicar. \\
+\code{dar\_de\_baja} & mascota\_id, refugio\_id & baja lógica (estado = baja) &
+RF-05: retirar la ficha del catálogo. \\
+\code{listar\_catalogo} & especie, tamano, edad\_min, edad\_max, pagina,
+por\_pagina & total, pagina, porPagina, mascotas &
+RF-34: consulta paginada y filtrada. \\
+\bottomrule
+\end{tabularx}
+}
+
+\subsection{Datos iniciales}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}V{0.8}V{1.2}V{0.9}V{0.75}Z{0.8}V{1.55}@{}}
+\toprule
+\thead{Mascota} & \thead{Refugio} & \thead{Especie / tamaño} &
+\thead{Estado} & \thead{¿Catálogo?} & \thead{Motivo} \\ \midrule
+1 --- Luna & 1 --- Patitas (verificado) & perro / grande & disponible &
+\textbf{Sí} & Ficha completa. \\
+2 --- Milo & 1 --- Patitas (verificado) & gato / pequeño & disponible &
+\textbf{Sí} & Ficha completa. \\
+3 --- Rocky & 1 --- Patitas (verificado) & perro / mediano & disponible &
+\textbf{Sí} & Ficha completa. \\
+4 --- Nube & 2 --- Colitas (pendiente) & gato / pequeño & disponible &
+\textit{No} & Refugio no verificado. \\
+5 --- Toby & 1 --- Patitas (verificado) & perro / pequeño & incompleta &
+\textit{No} & Sin fotografía. \\
+6 --- Canela & 1 --- Patitas (verificado) & perro / mediano & adoptada &
+\textit{No} & Ya adoptada. \\
+\bottomrule
+\end{tabularx}
+}
+
+Catálogo esperado con los datos iniciales: \textbf{Luna (1), Rocky (3), Milo
+(2)}, ordenados por \code{fecha\_publicacion} ascendente y, a igual fecha, por
+\code{id}.
+
+\subsection{Resultados de persistencia}
+
+Las 12 pruebas de la semana 13 se ejecutan con:
+
+\begin{lstlisting}
+cd persistencia
+$env:PYTHONUTF8 = "1"
+$env:PYTHONIOENCODING = "utf-8"
+python prueba_persistencia.py
+\end{lstlisting}
+
+{\footnotesize
+\begin{longtable}{@{}A{0.05\linewidth}L{0.60\linewidth}L{0.29\linewidth}@{}}
+\toprule
+\thead{\#} & \thead{Prueba} & \thead{Resultado} \\ \midrule \endfirsthead
+\thead{\#} & \thead{Prueba} & \thead{Resultado} \\ \midrule \endhead
+\bottomrule
+\endlastfoot
+1 & Crear ficha en refugio verificado y leerla desde una conexión nueva &
+Pasa --- id 7, disponible, 2 fotos. \\
+2 & Rechazar ficha de refugio no verificado &
+Pasa --- ERR-009; 0 filas nuevas. \\
+3 & Rechazar datos inválidos & Pasa --- ERR-004; 0 filas nuevas. \\
+4 & Consultar un identificador inexistente & Pasa --- devuelve None. \\
+5 & Violar la FK de refugio &
+Pasa --- FOREIGN KEY constraint failed. \\
+6 & Ficha sin fotos queda incompleta y fuera del catálogo &
+Pasa --- estado incompleta. \\
+7 & Catálogo con orden, filtros y paginación &
+Pasa --- total 4, orden [1, 3, 2, 7]. \\
+8 & Actualizar, publicar y dar de baja &
+Pasa --- incompleta $\rightarrow$ disponible $\rightarrow$ baja. \\
+9 & Rechazar más de cinco fotografías &
+Pasa --- repositorio y trigger. \\
+10 & Triggers de publicación &
+Pasa --- refugio pendiente y ficha sin foto. \\
+11 & Catálogo y ficha sin datos personales & Pasa --- 0 campos personales. \\
+12 & 20 consultas consecutivas al catálogo &
+Pasa --- 0,53 ms promedio; 0,66 ms máximo. \\
+\end{longtable}
+}
+
+\textbf{Resumen:} 12/12 pruebas superadas. La medición de tiempos de la semana
+13 es una línea base con 8 fichas y no sustituye la prueba de carga de RNF-05.
+La evidencia completa está en \code{evidencias/salida\_pruebas.txt}.
+
+\clearpage
+
+% =====================================================================
+% 4. Semana 14
+% =====================================================================
+\section{Semana 14 --- Servicios y API}
+
+\subsection{Arquitectura por capas}
+
+\begin{center}
+\code{HTTP} $\rightarrow$ \code{API} $\rightarrow$
+\code{Servicio de aplicación} $\rightarrow$ \code{Repositorio} $\rightarrow$
+\code{SQLite}
+\end{center}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}V{0.55}V{1.05}V{1.4}@{}}
+\toprule
+\thead{Capa} & \thead{Archivo} & \thead{Responsabilidad} \\ \midrule
+API & \code{api/main.py} & Recibir HTTP, validar la forma, delegar y traducir
+errores a códigos HTTP. No contiene reglas ni SQL. \\
+Contratos & \code{api/esquemas.py} & Modelos Pydantic v2 de entrada y salida. \\
+Inyección & \code{api/dependencias.py} & Crear el repositorio y los servicios;
+la base se toma de \code{DB\_PATH}. \\
+Servicios & \code{servicios/} & Coordinar el caso de uso, normalizar la
+respuesta y decidir la ausencia de una ficha. \\
+Repositorio & \code{persistencia/repositorio.py} & Todo el SQL, las validaciones
+de dominio y las transacciones. \\
+\bottomrule
+\end{tabularx}
+}
+
+Esta separación permite probar los servicios con un doble del repositorio, sin
+abrir una base real, y mantiene el SQL fuera de la API.
+
+\subsection{Servicios de aplicación}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}V{0.7}V{0.8}V{1.5}@{}}
+\toprule
+\thead{Servicio} & \thead{Caso de uso} & \thead{Métodos} \\ \midrule
+\code{ServicioMascotas} & RF-05 &
+\code{crear}, \code{consultar}, \code{actualizar}, \code{dar\_de\_baja} \\
+\code{ServicioCatalogo} & RF-34 &
+\code{listar} (filtros, paginación y normalización a snake\_case) \\
+\bottomrule
+\end{tabularx}
+}
+
+\code{ServicioMascotas.consultar} traduce la ausencia de una ficha a
+\code{FichaNoEncontrada} (ERR-011). \code{ServicioCatalogo} delega los filtros
+en el repositorio y convierte \code{porPagina} a \code{por\_pagina} en la
+respuesta JSON.
+
+\subsection{Endpoints}
+
+Base local: \url{http://127.0.0.1:8000/api/v1}. Documentación interactiva:
+\url{http://127.0.0.1:8000/docs}.
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}V{0.35}V{1.35}V{1.2}V{0.9}V{1.2}@{}}
+\toprule
+\thead{RF} & \thead{Método y ruta} & \thead{Servicio} & \thead{Éxito} &
+\thead{Errores posibles} \\ \midrule
+RF-05 & \code{POST /mascotas} & \code{ServicioMascotas.crear} &
+201 ficha creada & 400 ERR-004, 404 ERR-008, 409 ERR-009 \\
+RF-05 & \code{PUT /mascotas/\{id\}} & \code{ServicioMascotas.actualizar} &
+200 ficha actualizada & 400 ERR-004, 403 ERR-003, 404 ERR-011 \\
+RF-05 & \code{DELETE /mascotas/\{id\}?refugio\_id=\{id\}} &
+\code{ServicioMascotas.dar\_de\_baja} & 204 sin cuerpo &
+400 ERR-004, 403 ERR-003, 404 ERR-011 \\
+RF-34 & \code{GET /mascotas} & \code{ServicioCatalogo.listar} &
+200 página del catálogo & 400 ERR-004 \\
+\bottomrule
+\end{tabularx}
+}
+
+Formato único de error:
+
+\begin{lstlisting}
+{ "detail": "mensaje legible", "codigo": "ERR-004" }
+\end{lstlisting}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}V{0.5}V{0.5}V{2.0}@{}}
+\toprule
+\thead{Código} & \thead{HTTP} & \thead{Significado} \\ \midrule
+ERR-003 & 403 & La ficha no pertenece al refugio indicado. \\
+ERR-004 & 400 & Datos de entrada inválidos (tipo, dominio, rango, formato). \\
+ERR-006 & 409 & Violación de integridad de la base. \\
+ERR-008 & 404 & El refugio no existe. \\
+ERR-009 & 409 & El refugio no está verificado. \\
+ERR-011 & 404 & La ficha no existe. \\
+\bottomrule
+\end{tabularx}
+}
+
+Las validaciones de forma también responden 400 con ERR-004 (no 422), para
+mantener un único contrato de error. Un fallo inesperado responde 500 con
+ERR-500 y se registra sin exponer detalles técnicos.
+
+\subsection{Ejemplos de los contratos}
+
+\textbf{Crear una ficha (RF-05).} Cuerpo de \code{POST /mascotas}:
+
+\begin{lstlisting}
+{
+  "refugio_id": 1,
+  "nombre": "Nala",
+  "raza": "Mestiza",
+  "especie": "perro",
+  "edad_meses": 24,
+  "tamano": "mediano",
+  "nivel_energia": "media",
+  "experiencia_requerida": "basica",
+  "apta_con_menores": true,
+  "apta_con_mascotas": true,
+  "historial_salud": "Vacunas al día",
+  "historial_comportamiento": "Sociable",
+  "fecha_publicacion": "2026-11-10",
+  "fotografias": ["nala_01.jpg", "nala_02.jpg"]
+}
+\end{lstlisting}
+
+Respuesta 201 Created (resumen; la respuesta real incluye todos los campos del
+contrato y el id depende de la base; en la base de prueba es 7):
+
+\begin{lstlisting}
+{
+  "id": 7,
+  "refugio_id": 1,
+  "nombre": "Nala",
+  "especie": "perro",
+  "edad_meses": 24,
+  "tamano": "mediano",
+  "estado": "disponible",
+  "fecha_publicacion": "2026-11-10",
+  "refugio_nombre": "Refugio Patitas",
+  "refugio_localidad": "ENGATIVA",
+  "fotografias": [
+    { "id": 7, "archivo": "nala_01.jpg", "orden": 1 },
+    { "id": 8, "archivo": "nala_02.jpg", "orden": 2 }
+  ]
+}
+\end{lstlisting}
+
+\textbf{Consultar el catálogo (RF-34).} \code{GET /mascotas?especie=perro\&tamano=mediano}
+después de crear a Nala en la base de demostración:
+
+\begin{lstlisting}
+{
+  "total": 2,
+  "pagina": 1,
+  "por_pagina": 20,
+  "mascotas": [
+    {
+      "id": 3, "nombre": "Rocky", "especie": "perro",
+      "edad_meses": 60, "tamano": "mediano",
+      "nivel_energia": "alta", "fecha_publicacion": "2026-10-03",
+      "refugio_id": 1, "refugio_nombre": "Refugio Patitas",
+      "refugio_localidad": "ENGATIVA", "foto_principal": "rocky_01.jpg"
+    },
+    {
+      "id": 7, "nombre": "Nala", "especie": "perro",
+      "edad_meses": 24, "tamano": "mediano",
+      "nivel_energia": "media", "fecha_publicacion": "2026-11-10",
+      "refugio_id": 1, "refugio_nombre": "Refugio Patitas",
+      "refugio_localidad": "ENGATIVA", "foto_principal": "nala_01.jpg"
+    }
+  ]
+}
+\end{lstlisting}
+
+\textbf{Rechazo por refugio no verificado (RF-05):}
+
+\begin{lstlisting}
+{
+  "detail": "el refugio 2 no está verificado y no puede publicar fichas",
+  "codigo": "ERR-009"
+}
+\end{lstlisting}
+
+\textbf{Filtro válido sin coincidencias (RF-34):} responde 200 con
+\code{total: 0} y \code{mascotas: []}. \textbf{Filtro inválido:} responde 400
+con ERR-004. El detalle completo de cada contrato, con todos los campos y
+condiciones límite, está en \code{docs/contratos\_api.md}.
+
+\subsection{Decisiones de diseño}
+
+\begin{itemize}
+\item \textbf{Actor temporal.} La autenticación y los roles se integran en la
+  semana 3. Mientras tanto, el refugio que actúa se envía como
+  \code{refugio\_id} en el cuerpo (POST/PUT) o en la consulta (DELETE).
+\item \textbf{Validación en dos niveles.} Pydantic valida la forma y el
+  repositorio valida el dominio; ambos errores se traducen a ERR-004.
+\item \textbf{Base configurable.} La ruta de SQLite se lee de \code{DB\_PATH} en
+  cada petición, lo que permite aislar las pruebas sin tocar la base de
+  desarrollo.
+\item \textbf{CORS preparado.} Los orígenes por defecto son
+  \code{http://localhost:5173}, \code{http://127.0.0.1:5173} y
+  \code{http://localhost:3000}, configurables con \code{CORS\_ORIGINS}.
+\item \textbf{Baja lógica.} DELETE no borra la fila: cambia el estado a baja
+  para conservar la trazabilidad y cumplir RN-15.
+\item \textbf{Sin datos personales.} El catálogo y la ficha pública solo
+  exponen datos de la mascota y del refugio (nombre y localidad), no del
+  adoptante.
+\end{itemize}
+
+\subsection{Pruebas funcionales}
+
+\begin{lstlisting}
+python -m pytest -v
+\end{lstlisting}
+
+Resultado: \textbf{44/44 pruebas pasan} en aproximadamente 2 s
+(\code{evidencias/salida\_pruebas\_semana15.txt}). Incluye 5 pruebas nuevas de
+integración de la interfaz. Aparece un aviso de deprecación de Starlette sobre
+\code{httpx}; no afecta los resultados.
+
+{\footnotesize
+\begin{longtable}{@{}A{0.06\linewidth}L{0.12\linewidth}L{0.23\linewidth}L{0.29\linewidth}L{0.18\linewidth}@{}}
+\toprule
+\thead{RF} & \thead{Escenario} & \thead{Acción} & \thead{Resultado obtenido} &
+\thead{Evidencia} \\ \midrule \endfirsthead
+\thead{RF} & \thead{Escenario} & \thead{Acción} & \thead{Resultado obtenido} &
+\thead{Evidencia} \\ \midrule \endhead
+\bottomrule
+\endlastfoot
+RF-05 & Válido & POST con refugio verificado y 2 fotos &
+201, id 7, disponible, 2 fotos; verificado en SQLite desde otra conexión &
+\code{test\_rf05\_api.py} \\
+RF-05 & Rechazo & POST con refugio no verificado &
+409 ERR-009; 0 filas nuevas & \code{test\_rf05\_api.py} \\
+RF-05 & Entrada & POST con especie inválida &
+400 ERR-004; 0 filas nuevas & \code{test\_rf05\_api.py} \\
+RF-05 & Edición & PUT de ficha incompleta con una foto &
+200; pasa a disponible y aparece en el catálogo & \code{test\_rf05\_api.py} \\
+RF-05 & Baja & DELETE de una ficha propia &
+204; estado baja y ya no aparece en el catálogo & \code{test\_rf05\_api.py} \\
+RF-34 & Válido & GET del catálogo inicial &
+200, total 3, orden [1, 3, 2] & \code{test\_rf34\_api.py} \\
+RF-34 & Filtros & Especie, tamaño y rango de edad &
+[1, 3], [2] y [2] & \code{test\_rf34\_api.py} \\
+RF-34 & Paginación & por\_pagina = 2 &
+Página 1 [1, 3]; página 2 [2]; total 3 & \code{test\_rf34\_api.py} \\
+RF-34 & Ausencia & Filtro válido sin coincidencias &
+200, total 0, lista vacía & \code{test\_rf34\_api.py} \\
+RF-34 & Entrada & especie = conejo &
+400 ERR-004 & \code{test\_rf34\_api.py} \\
+\end{longtable}
+}
+
+\textbf{Distribución de las 44 pruebas:}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}V{1.4}V{1.1}V{0.5}@{}}
+\toprule
+\thead{Archivo} & \thead{Propósito} & \thead{Casos} \\ \midrule
+\code{pruebas/test\_rf05\_api.py} & Funcionales de RF-05 & 8 \\
+\code{pruebas/test\_rf34\_api.py} & Funcionales de RF-34 y RNF-04 & 8 \\
+\code{pruebas/test\_rnf10\_integridad.py} & Matriz de entradas inválidas
+(RNF-10) & 14 \\
+\code{pruebas/test\_servicios\_aislados.py} & Servicios con doble del
+repositorio (RNF-08) & 9 \\
+\code{pruebas/test\_integracion\_ui.py} & Integración de \code{/ui/} con la API
+(semana 15) & 5 \\
+\bottomrule
+\end{tabularx}
+}
+
+\subsection{Demostración HTTP real}
+
+\begin{lstlisting}
+python -m pruebas.demo_api
+\end{lstlisting}
+
+El script levanta Uvicorn en un hilo, usa un cliente \code{httpx} real y genera
+\code{evidencias/demo\_api.txt} con las peticiones y respuestas completas:
+crear (RF-05), consultar catálogo (RF-34), actualizar (RF-05), dar de baja
+(RF-05), verificar que la ficha dada de baja sale del catálogo, catálogo vacío
+y filtro inválido. El resultado final es \textbf{CUMPLE}.
+
+\clearpage
+
+% =====================================================================
+% 5. RNF
+% =====================================================================
+\section{Verificación de requisitos no funcionales}
+
+{\footnotesize
+\begin{longtable}{@{}A{0.12\linewidth}L{0.18\linewidth}L{0.21\linewidth}L{0.19\linewidth}L{0.20\linewidth}@{}}
+\toprule
+\thead{RF / RNF} & \thead{Calidad ISO/IEC 25010:2023} & \thead{Prueba y meta} &
+\thead{Resultado} & \thead{Evidencia} \\ \midrule \endfirsthead
+\thead{RF / RNF} & \thead{Calidad ISO/IEC 25010:2023} & \thead{Prueba y meta} &
+\thead{Resultado} & \thead{Evidencia} \\ \midrule \endhead
+\bottomrule
+\endlastfoot
+RF-05, RF-34 / \textbf{RNF-05} & Eficiencia de desempeño / comportamiento
+temporal & 1.000 fichas; 20 consultas consecutivas por HTTP; cada una $\leq$
+1 s & \textbf{Cumple en alcance secuencial}; 20/20; mínimo 4,75 ms; promedio
+6,14 ms; p95 7,52 ms; máximo 7,76 ms; \pend{no verificado} con 50 usuarios &
+\code{evidencias/rnf\_desempeno.txt} \\
+RF-05, RF-34 / \textbf{RNF-08} & Mantenibilidad / capacidad para ser probado &
+Doble del repositorio, sin base real; cobertura $\geq$ 70\,\% en servicios &
+\textbf{Cumple}; 9/9 pruebas aisladas; \textbf{100\,\%} de cobertura (33
+sentencias), repetido con 44 pruebas &
+\code{test\_servicios\_aislados.py}, \code{cobertura.txt} \\
+RF-05, RF-34 / \textbf{RNF-10} & Seguridad / integridad & Matriz de entradas
+inválidas; 0 filas persistidas & \textbf{Cumple}; 14/14 casos rechazados; 0
+filas nuevas o modificadas & \code{test\_rnf10\_integridad.py},
+\code{salida\_pruebas\_semana14.txt} \\
+RF-05, RF-34 / \textbf{RNF-04} & Seguridad / confidencialidad & Revisar las
+claves del catálogo y de la ficha pública & \textbf{Cumple}; 0 campos
+personales & \code{test\_rf34\_api.py}, \code{demo\_api.txt} \\
+RF-34 / \textbf{RNF-07} & Flexibilidad / escalabilidad & 2.000 fichas y 5.000
+adoptantes; p95 $\leq$ 1 s & \pend{No verificado}; sin medición; pendiente de
+la semana 3 & --- \\
+\end{longtable}
+}
+
+\subsection{Lectura honesta de RNF-05}
+
+La meta de la plantilla incluye 500 fichas y 50 usuarios concurrentes. En esta
+entrega se usó un volumen mayor (1.000 fichas), pero la medición es
+\textbf{secuencial}, no concurrente. Por eso el resultado se declara
+\textbf{cumplido en lo secuencial} y \textbf{no verificado} con 50 usuarios; la
+prueba de concurrencia queda para la semana 3. No se rebajó el umbral: cada
+consulta se exigió $\leq$ 1 s. La medición se repitió en la semana 15 sobre la
+misma API (mínimo 4,75 ms; promedio 6,14 ms; p95 7,52 ms; máximo 7,76 ms): el
+tiempo cambió con la máquina, pero el umbral se cumplió en las 20 consultas.
+
+\subsection{Cierre de la matriz en la semana 15}
+
+La matriz anterior es la definitiva del corte. No se agregaron RNF nuevos por
+construir la interfaz. RNF-08 se repitió porque se incorporaron archivos
+estáticos y una nueva ruta de pruebas; los servicios no cambiaron y el
+aislamiento con doble del repositorio se mantuvo en 100\,\%. RNF-07 sigue
+\textbf{no verificado} y no se reporta como cumplido. Las prácticas de etiquetas,
+teclado y mensajes de la interfaz son mejoras de interacción, no un RNF de
+accesibilidad acordado.
+
+\subsection{Comandos de verificación}
+
+\begin{lstlisting}
+# RNF-08: cobertura de los servicios
+python -m coverage run -m pytest -q
+python -m coverage report -m
+
+# RNF-05: 1.000 fichas y 20 consultas por HTTP real
+python -m pruebas.rnf_desempeno
+\end{lstlisting}
+
+\clearpage
+
+% =====================================================================
+% 6. Reproducción
+% =====================================================================
+\section{Reproducción de la entrega}
+
+\subsection{Requisitos}
+
+\begin{itemize}
+\item Python 3.12.10 (compatible con 3.10 o superior).
+\item SQLite 3.49.1 incluido en Python; sin servidor ni credenciales.
+\item Dependencias de \code{requirements.txt}: FastAPI, Uvicorn, pytest, httpx
+  y coverage.
+\end{itemize}
+
+\subsection{Instalación y ejecución}
+
+\begin{lstlisting}
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+
+# Base de la API con el estado inicial conocido
+python -m persistencia.inicializar_db
+
+# Servidor local
+uvicorn api.main:app --reload --port 8000
+\end{lstlisting}
+
+\begin{itemize}
+\item Base URL: \url{http://127.0.0.1:8000/api/v1}
+\item Documentación interactiva: \url{http://127.0.0.1:8000/docs}
+\item OpenAPI: \url{http://127.0.0.1:8000/openapi.json}
+\end{itemize}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}V{0.6}V{1.1}V{1.3}@{}}
+\toprule
+\thead{Variable} & \thead{Valor por defecto} & \thead{Uso} \\ \midrule
+\code{DB\_PATH} & \code{evidencias/api.db} & Ruta de la base SQLite. \\
+\code{CORS\_ORIGINS} & \code{localhost:5173}, \code{127.0.0.1:5173} y
+\code{localhost:3000} & Orígenes permitidos para la interfaz. \\
+\bottomrule
+\end{tabularx}
+}
+
+\subsection{Estructura relevante}
+
+\begin{lstlisting}
+proyecto_arq_sis_mascotas/
+|-- api/                  # rutas, contratos y dependencias
+|-- servicios/            # RF-05 y RF-34
+|-- persistencia/         # esquema, seed, repositorio e inicializador
+|-- pruebas/              # 44 pruebas y scripts de evidencia
+|-- frontend/             # interfaz minima servida en /ui/
+|-- docs/
+|   |-- contratos_api.md          # contratos completos
+|   |-- informe_semanas_13_14.md  # informe en Markdown
+|   `-- informe_semana15.md       # informe de integracion
+|-- evidencias/           # pruebas, cobertura, desempeno e interfaz
+|-- plantilla/            # documentos formales
+|-- main.py               # entrada de Vercel
+`-- README.md
+\end{lstlisting}
+
+\subsection{Evidencias}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}V{0.7}V{1.3}@{}}
+\toprule
+\thead{Evidencia} & \thead{Contenido} \\ \midrule
+\code{evidencias/salida\_pruebas.txt} & 12/12 pruebas de persistencia
+(semana 13). \\
+\code{evidencias/salida\_pruebas\_semana14.txt} & 39/39 pruebas de la
+semana 14. \\
+\code{evidencias/salida\_pruebas\_semana15.txt} & 44/44 pruebas, incluidas 5
+de integración de interfaz (semana 15). \\
+\code{evidencias/integracion\_ui.txt} & Integración HTTP real de \code{/ui/}
+con la API; resultado CUMPLE. \\
+\code{evidencias/pantalla\_ui.txt} & Recorrido y mensajes en navegador real. \\
+\code{evidencias/cobertura.txt} & Cobertura de servicios (RNF-08). \\
+\code{evidencias/rnf\_desempeno.txt} & 20 consultas sobre 1.000 fichas
+(RNF-05). \\
+\code{evidencias/demo\_api.txt} & Peticiones y respuestas HTTP reales de ambos
+RF. \\
+\code{evidencias/prueba.db} & Base reproducible de la semana 13. \\
+\bottomrule
+\end{tabularx}
+}
+
+\clearpage
+
+% =====================================================================
+% 7. Semana 15
+% =====================================================================
+\section{Semana 15 --- Interfaz e integración}
+
+\subsection{Resultado y flujo}
+
+Los dos requisitos funcionales priorizados se ejecutan desde una interfaz que
+consume la \textbf{API real}: no hay respuestas simuladas ni estado guardado en
+el navegador. Cada dato visible se obtiene con una petición HTTP a
+\code{/api/v1}. La pantalla se sirve desde la propia FastAPI en \code{/ui/}, en
+el mismo origen que la API, por lo que no se modificó CORS ni se agregó un
+framework de frontend.
+
+\begin{center}
+\code{Interfaz (/ui/)} $\rightarrow$ \code{API (/api/v1)} $\rightarrow$
+\code{Servicio de aplicación} $\rightarrow$ \code{Repositorio} $\rightarrow$
+\code{SQLite}
+\end{center}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}V{0.3}V{1.0}V{1.7}@{}}
+\toprule
+\thead{RF} & \thead{Acción desde la interfaz} & \thead{Resultado observable} \\ \midrule
+\textbf{RF-05} & Crear, editar y dar de baja una ficha &
+\code{id} real devuelto por la API; estados \emph{disponible} o
+\emph{incompleta}; confirmaciones HTTP 201, 200 y 204. \\
+\textbf{RF-34} & Consultar el catálogo con filtros y paginación &
+Lista recuperada del servidor con \code{total}, \code{pagina},
+\code{por\_pagina} y filas reales. \\
+\bottomrule
+\end{tabularx}
+}
+
+Los identificadores, prioridades, reglas RN-22/RN-03/RN-15, formatos y
+contratos de las semanas 13 y 14 se conservan sin cambios. La adaptación frente
+al ejemplo de citas de la guía es directa: allí se consulta por \code{id} de
+cita; aquí RF-34 es un catálogo, por lo que la verificación tras recargar se
+hace volviendo a consultar y comprobando que el \code{id} creado aparece en la
+respuesta del servidor.
+
+\subsection{Interacción, estados y mensajes}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}V{0.42}V{1.28}V{1.30}@{}}
+\toprule
+\thead{Estado} & \thead{RF-05: crear, editar y baja} & \thead{RF-34: consultar} \\ \midrule
+Inicial & Botones habilitados, sin mensaje &
+Botón habilitado, tabla vacía. \\
+En curso & Texto \code{Enviando...} y botón deshabilitado &
+Texto \code{Consultando...}, tabla limpiada y botón deshabilitado. \\
+Resultado & Mensaje con \code{id}, nombre o estado reales de la respuesta &
+Mensaje con total y página, más las filas reales. \\
+Rechazo & Mensaje con HTTP y código del contrato; entradas conservadas &
+Mensaje con ERR-004; tabla sin datos anteriores. \\
+Fallo de comunicación & \emph{Resultado no confirmado}, sin reintento automático &
+Mensaje de servidor no disponible y tabla limpiada. \\
+\bottomrule
+\end{tabularx}
+}
+
+Se aplicaron etiquetas visibles, campos obligatorios marcados con `*', selects
+para dominios cerrados, controles operables con teclado, mensajes de texto que
+no dependen del color y \code{aria-live="polite"} en los resultados. Las
+entradas se conservan tras un rechazo. Un error \code{5xx} o un fallo de
+\code{fetch} se trata como comunicación incierta, nunca como éxito de negocio;
+no se muestra una confirmación falsa y los controles se rehabilitan al finalizar
+el intento. No se declara un RNF de accesibilidad nuevo.
+
+\subsection{Conexión con los contratos vigentes}
+
+{\footnotesize
+\begin{longtable}{@{}A{0.10\linewidth}A{0.42\linewidth}A{0.42\linewidth}@{}}
+\toprule
+\thead{RF / acción} & \thead{Solicitud que envía la interfaz} &
+\thead{Tratamiento de la respuesta} \\ \midrule \endfirsthead
+\thead{RF / acción} & \thead{Solicitud que envía la interfaz} &
+\thead{Tratamiento de la respuesta} \\ \midrule \endhead
+\bottomrule
+\endlastfoot
+RF-05 crear & \code{POST /api/v1/mascotas} con JSON \code{snake\_case}:
+\code{refugio\_id}, \code{nombre}, \code{raza}, \code{especie},
+\code{edad\_meses}, \code{tamano}, \code{nivel\_energia},
+\code{experiencia\_requerida}, \code{apta\_con\_menores},
+\code{apta\_con\_mascotas}, \code{historial\_salud},
+\code{historial\_comportamiento}, \code{fecha\_publicacion} y
+\code{fotografias} &
+201: muestra \code{id} y \code{estado} reales; 409 ERR-009: refugio no
+verificado; 400 ERR-004: datos inválidos; 404 ERR-008: refugio ausente. \\
+RF-05 editar & \code{PUT /api/v1/mascotas/\{id\}} con \code{refugio\_id} y
+\code{nombre} &
+200: nombre y estado reales; 403 ERR-003, 404 ERR-011, 400 ERR-004. \\
+RF-05 baja & \code{DELETE /api/v1/mascotas/\{id\}?refugio\_id=\{id\}}, sin cuerpo &
+204: baja confirmada; 403 ERR-003, 404 ERR-011. \\
+RF-34 consultar & \code{GET /api/v1/mascotas} con \code{especie}, \code{tamano},
+\code{edad\_min}, \code{edad\_max}, \code{pagina} y \code{por\_pagina} &
+200: tabla desde \code{mascotas} y resumen; 400 ERR-004: filtro inválido;
+\code{total = 0}: ausencia, no error. \\
+\end{longtable}
+}
+
+No se cambió ningún contrato. El \code{id} lo genera el backend y el estado
+inicial lo decide el repositorio según RN-22 y RN-03. La interfaz solo valida la
+presencia de campos obligatorios y el formato visible de la fecha; las reglas de
+negocio siguen en el backend.
+
+\subsection{Escenarios de integración ejecutados}
+
+Base inicial: seis mascotas sembradas, catálogo inicial $[1, 3, 2]$, refugio 1
+verificado y refugio 2 pendiente. Fecha usada en la demostración:
+2026-11-20.
+
+{\footnotesize
+\begin{longtable}{@{}A{0.04\linewidth}A{0.08\linewidth}A{0.14\linewidth}A{0.23\linewidth}A{0.26\linewidth}A{0.19\linewidth}@{}}
+\toprule
+\thead{\#} & \thead{RF} & \thead{Escenario} & \thead{Acción desde pantalla} &
+\thead{Resultado obtenido} & \thead{Evidencia} \\ \midrule \endfirsthead
+\thead{\#} & \thead{RF} & \thead{Escenario} & \thead{Acción desde pantalla} &
+\thead{Resultado obtenido} & \thead{Evidencia} \\ \midrule \endhead
+\bottomrule
+\endlastfoot
+1 & RF-34 & Válido & Consultar sin filtros &
+200, total 3, ids 1, 3, 2 & \code{pantalla\_ui.txt} \\
+2 & RF-05 & Válido & Crear ficha en refugio 1 con 2 fotos &
+201, id 7, disponible, persistida & \code{pantalla\_ui.txt} \\
+3 & RF-34 & Persistencia & Recargar \code{/ui/} y consultar &
+Total 4, ids 1, 3, 2, 7 desde la API & \code{pantalla\_ui.txt} \\
+4 & RF-05 & Edición & \code{PUT} del id 7 con nuevo nombre &
+200, \emph{Nala actualizada} & \code{pantalla\_ui.txt} \\
+5 & RF-05 & Baja & \code{DELETE} del id 7 &
+204; ids 1, 3, 2 & \code{pantalla\_ui.txt} \\
+6 & RF-34 & Filtros & \code{especie=perro}, \code{tamano=mediano} &
+Ids 3 y 7 antes de la baja & \code{integracion\_ui.txt} \\
+7 & RF-34 & Paginación & \code{por\_pagina=2}, páginas 1 y 2 &
+p1 $[1,3]$; p2 $[2,7]$; total 4 & \code{integracion\_ui.txt} \\
+8 & RF-34 & Ausencia & \code{gato} y \code{grande} &
+200, total 0, 0 filas & \code{pantalla\_ui.txt} \\
+9 & RF-34 & Entrada & \code{especie=conejo} &
+400 ERR-004, tabla limpiada & \code{pantalla\_ui.txt} \\
+10 & RF-05 & Rechazo & Crear en refugio 2 &
+409 ERR-009, nombre conservado & \code{pantalla\_ui.txt} \\
+11 & RF-05 & Entrada & Crear con \code{especie=conejo} &
+400 ERR-004, sin filas nuevas & \code{integracion\_ui.txt} \\
+12 & Com. & Backend detenido & Consultar y crear &
+HTTP 502, sin éxito falso, botones activos & \code{pantalla\_ui.txt} \\
+13 & Persist. & Reinicio & Consultar tras reiniciar Uvicorn &
+Ficha 7 ausente; estado conservado & \code{integracion\_ui.txt} \\
+\end{longtable}
+}
+
+La persistencia se comprobó desde una conexión SQLite nueva y tras reiniciar
+Uvicorn, no solo en la memoria de la página. Para el rechazo se comparó el
+conteo de filas antes y después.
+
+\subsection{Evidencias y reproducción}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}V{0.7}V{1.3}@{}}
+\toprule
+\thead{Evidencia} & \thead{Contenido} \\ \midrule
+\code{evidencias/pantalla\_ui.txt} & Mensajes visibles, filas, rechazos y fallo
+de comunicación en navegador real. \\
+\code{evidencias/integracion\_ui.txt} & Reproducción automática con HTTP real y
+SQLite; resultado \textbf{CUMPLE}. \\
+\code{evidencias/salida\_pruebas\_semana15.txt} & 44/44 pruebas, incluidas 5 de
+integración de interfaz. \\
+\code{evidencias/cobertura.txt} & Repetición de RNF-08: 100\,\% en servicios. \\
+\code{evidencias/rnf\_desempeno.txt} & Repetición de RNF-05: 20/20 consultas. \\
+\bottomrule
+\end{tabularx}
+}
+
+\begin{lstlisting}
+python -m persistencia.inicializar_db
+uvicorn api.main:app --reload --port 8000
+# Interfaz: http://127.0.0.1:8000/ui/
+python -m pytest -v
+python -m pruebas.demo_integracion
+python -m pruebas.rnf_desempeno
+\end{lstlisting}
+
+\subsection{Limitaciones}
+
+\begin{itemize}
+\item El actor se identifica con \code{refugio\_id} explícito; no hay
+  autenticación ni roles.
+\item Las fotos se registran por nombre de archivo; no se almacena el binario.
+\item RNF-05 se midió de forma secuencial; no hay prueba de 50 usuarios
+  concurrentes. RNF-07 no tiene medición.
+\item PostgreSQL y sus índices no se han verificado en este corte.
+\item La pantalla es una demostración mínima, no un portal completo.
+\end{itemize}
+
+\clearpage
+
+% =====================================================================
+% 8. Checklist
+% =====================================================================
+\section{Checklist de entrega}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}V{1.9}Z{0.35}V{0.75}@{}}
+\toprule
+\thead{Criterio} & \thead{Cumple} & \thead{Evidencia} \\ \midrule
+Los dos RF mantienen la prioridad y el alcance de la semana 13 & \textbf{Sí} &
+Sección 2 y \code{plantilla\_13\_1.pdf}. \\
+Ambos RF tienen servicios y endpoints identificables & \textbf{Sí} &
+\code{servicios/} y \code{api/main.py}. \\
+Los contratos describen éxito, entrada inválida y errores & \textbf{Sí} &
+\code{docs/contratos\_api.md} y \code{/docs}. \\
+La interfaz ejecuta ambos RF contra la API real & \textbf{Sí} &
+\code{/ui/} y \code{evidencias/pantalla\_ui.txt}. \\
+Hay resultado válido y rechazo/ausencia por cada RF & \textbf{Sí} &
+Secciones 4 y 7. \\
+Se verifica la persistencia real y la ausencia de escrituras indebidas &
+\textbf{Sí} & Recarga, conexión nueva y reinicio del backend. \\
+Los fallos de comunicación no confirman resultados no verificados &
+\textbf{Sí} & \code{pantalla\_ui.txt} y \code{test\_integracion\_ui.py}. \\
+El SQL queda en persistencia y las reglas en servicio/dominio & \textbf{Sí} &
+Sección 3. \\
+Cada RF se vincula con sus RNF y atributos ISO & \textbf{Sí} & Sección 5. \\
+La matriz final distingue cumplidos, parciales y no verificados & \textbf{Sí} &
+RNF-05 secuencial y RNF-07 no verificado. \\
+Los RNF previstos tienen medidas y evidencias & \textbf{Sí} &
+RNF-04, 08 y 10; RNF-05 en alcance secuencial. \\
+Se distinguen los incumplimientos y pendientes de la semana 3 & \textbf{Sí} &
+Sección de pendientes. \\
+El README permite ejecutar y repetir las pruebas & \textbf{Sí} &
+Secciones 6 y 7 y \code{README.md}. \\
+\bottomrule
+\end{tabularx}
+}
+
+% =====================================================================
+% 9. Pendientes
+% =====================================================================
+\section{Pendientes y relevo a la semana 3}
+
+\textbf{Implementado y verificado}
+
+\begin{itemize}
+\item Persistencia completa de RF-05 y RF-34 con integridad referencial.
+\item Servicios de aplicación y API REST con cuatro endpoints.
+\item Contratos documentados y OpenAPI generado por FastAPI.
+\item 44 pruebas: funcionales, de integridad, de servicios aislados y de
+  integración de la interfaz.
+\item RNF-04, RNF-05 (secuencial), RNF-08 y RNF-10 con evidencia reproducible;
+  RNF-07 identificado como no verificado.
+\item Demostración HTTP real de ambos RF y recorrido desde la interfaz
+  \code{/ui/} en navegador real.
+\end{itemize}
+
+\textbf{Pendiente para la semana 3}
+
+\begin{itemize}
+\item Autenticación, roles y reemplazo de \code{refugio\_id} explícito por el
+  usuario autenticado.
+\item Ampliación de la interfaz mínima sin convertirla en un portal.
+\item Prueba de concurrencia de RNF-05 (50 usuarios) y RNF-07 (2.000 fichas,
+  5.000 adoptantes).
+\item Migración y verificación en PostgreSQL (ADR-03/ADR-10).
+\item Almacenamiento binario de fotos (hoy se guarda la ruta).
+\item Rechazo automático de solicitudes pendientes al dar de baja (RN-15),
+  fuera de este corte.
+\end{itemize}
+
+% =====================================================================
+% 10. Trazabilidad
+% =====================================================================
+\section{Trazabilidad}
+
+{\footnotesize
+\begin{tabularx}{\linewidth}{@{}V{0.6}V{1.4}@{}}
+\toprule
+\thead{Elemento} & \thead{Dónde se evidencia} \\ \midrule
+RF-05 & \code{servicios/servicio\_mascotas.py}, \code{api/main.py}
+(POST/PUT/DELETE), \code{frontend/app.js} y
+\code{pruebas/test\_rf05\_api.py}. \\
+RF-34 & \code{servicios/servicio\_catalogo.py}, \code{api/main.py} (GET),
+\code{frontend/app.js} y \code{pruebas/test\_rf34\_api.py}. \\
+Contratos & \code{docs/contratos\_api.md}, \code{/docs} y
+\code{/openapi.json}. \\
+Interfaz \code{/ui/} & \code{frontend/index.html}, \code{frontend/styles.css},
+\code{frontend/app.js} y \code{evidencias/pantalla\_ui.txt}. \\
+Integración UI & \code{pruebas/test\_integracion\_ui.py},
+\code{pruebas/demo\_integracion.py} y \code{evidencias/integracion\_ui.txt}. \\
+RNF-04 & \code{test\_catalogo\_sin\_datos\_personales\_rnf04}. \\
+RNF-05 & \code{pruebas/rnf\_desempeno.py} y
+\code{evidencias/rnf\_desempeno.txt}; cumplido solo en alcance secuencial. \\
+RNF-08 & \code{pruebas/test\_servicios\_aislados.py} y
+\code{evidencias/cobertura.txt}. \\
+RNF-10 & \code{pruebas/test\_rnf10\_integridad.py} y
+\code{evidencias/salida\_pruebas\_semana14.txt}. \\
+RNF-07 & \textbf{No verificado}; sin medición; pendiente de la semana 3. \\
+Persistencia & \code{persistencia/schema.sql},
+\code{persistencia/repositorio.py} y \code{evidencias/salida\_pruebas.txt}. \\
+Informe en Markdown & \code{docs/informe\_semanas\_13\_14.md} y
+\code{docs/informe\_semana15.md}. \\
+Documento semana 13 & \code{plantilla/plantilla\_13\_1.tex} y
+\code{plantilla/plantilla\_13\_1.pdf}. \\
+Documento semanas 13--15 & \code{plantilla/plantilla\_13\_14\_15.tex}. \\
+Despliegue de prueba & \code{main.py}, \code{.vercelignore} y
+\url{https://aqsis-corte-vertical.vercel.app}; base efímera en \code{/tmp}. \\
+\bottomrule
+\end{tabularx}
+}
+
+\section*{Cierre}
+
+La semana 13 dejó una base reproducible y verificada; la semana 14 convirtió esa
+persistencia en servicios y una API con contratos estables; la semana 15 agregó
+la interfaz mínima que consume esa API real y cerró la matriz RF--RNF. Las tres
+semanas mantienen el mismo alcance: publicar fichas (RF-05) y consultarlas
+(RF-34), sin cambiar contratos ni reglas de negocio. La calidad se concentró en
+integridad, comportamiento temporal, capacidad de prueba y confidencialidad;
+RNF-05 se reporta como cumplido solo en alcance secuencial y RNF-07 como no
+verificado. Lo que falta ---autenticación, concurrencia, carga y PostgreSQL---
+está identificado y se retoma en la semana 3.
+
+\end{document}
