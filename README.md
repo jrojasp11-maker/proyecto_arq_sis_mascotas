@@ -1,4 +1,4 @@
-# Corte vertical semanas 13–14 — Persistencia, servicios y API de RF-05 y RF-34
+# Corte vertical semanas 13–15 — Persistencia, servicios, API e interfaz de RF-05 y RF-34
 
 Repositorio: <https://github.com/jrojasp11-maker/proyecto_arq_sis_mascotas>
 
@@ -8,14 +8,15 @@ Proyecto: **Sistema de Apoyo a la Decisión para la Adopción Responsable de Mas
 
 Este repositorio documenta el corte vertical de **Arquitectura de Sistemas I**
 sobre el caso de estudio de **Práctica de Ingeniería**: los refugios publican
-fichas de mascotas y los adoptantes consultan el catálogo. En esta entrega no se
+fichas de mascotas y los adoptantes consultan el catálogo. En estas entregas no se
 implementa la inteligencia artificial.
 
 | Semana | Trabajo | Evidencia |
 |---|---|---|
 | 13 | Persistencia de los dos RF priorizados | Esquema, repositorio y 12 pruebas |
-| **14** | **Servicios, API, contratos y verificación de RNF** | **API FastAPI, 39 pruebas y evidencias de calidad** |
-| 3 (prototipo) | Interfaz y cierre | Pendiente: pantalla, autenticación y carga |
+| 14 | Servicios, API, contratos y verificación de RNF | API FastAPI, 39 pruebas y evidencias de calidad |
+| **15** | **Interfaz mínima, integración con la API real y cierre de la matriz RF–RNF** | **Pantalla `/ui/`, 44 pruebas e integración verificada** |
+| 3 (prototipo) | Autenticación, concurrencia y carga | Pendiente: roles, RNF-07 y PostgreSQL |
 
 | Orden | RF | Resultado observable |
 |---|---|---|
@@ -25,7 +26,9 @@ implementa la inteligencia artificial.
 **Stack:** Python 3.12 + FastAPI + Pydantic v2 + SQLite 3. La base objetivo del
 proyecto sigue siendo PostgreSQL (ADR-03/ADR-10); SQLite se usa para reproducir
 el corte sin instalar un servidor. El SQL está encapsulado en
-`persistencia/repositorio.py` y no se repite en la API.
+`persistencia/repositorio.py` y no se repite en la API. La interfaz mínima es
+HTML, CSS y JavaScript servidos por la propia FastAPI en `/ui/`, sin framework
+adicional ni CORS nuevo.
 
 ## 1. Requisitos e instalación
 
@@ -48,8 +51,12 @@ python -m pip install -r requirements.txt
 
 ```text
 proyecto_arq_sis_mascotas/
+├── frontend/
+│   ├── index.html              # pantalla mínima de RF-05 y RF-34
+│   ├── app.js                  # fetch a /api/v1, estados y mensajes
+│   └── styles.css              # estilos y contraste de la interfaz
 ├── api/
-│   ├── main.py                 # rutas, CORS y traducción de errores a HTTP
+│   ├── main.py                 # rutas, CORS, errores HTTP y montaje de /ui/
 │   ├── esquemas.py             # contratos Pydantic de entrada y salida
 │   └── dependencias.py         # inyección del repositorio y los servicios
 ├── servicios/
@@ -65,56 +72,68 @@ proyecto_arq_sis_mascotas/
 ├── pruebas/
 │   ├── test_rf05_api.py        # pruebas funcionales de RF-05
 │   ├── test_rf34_api.py        # pruebas funcionales de RF-34
-│   ├── test_rnf10_integridad.py# matriz de entradas inválidas
+│   ├── test_rnf10_integridad.py # matriz de entradas inválidas
 │   ├── test_servicios_aislados.py # RNF-08 con doble de repositorio
+│   ├── test_integracion_ui.py  # integración de /ui/ con los contratos
 │   ├── rnf_desempeno.py        # RNF-05: 20 consultas por HTTP real
 │   ├── demo_api.py             # demostración HTTP de ambos RF
+│   ├── demo_integracion.py     # demostración reproducible de /ui/ + API
 │   └── servidor.py             # Uvicorn temporal para las verificaciones
 ├── docs/
 │   ├── contratos_api.md        # contratos completos de los endpoints
-│   └── informe_semanas_13_14.md # informe combinado de las semanas 13 y 14
+│   ├── informe_semanas_13_14.md # informe combinado de las semanas 13 y 14
+│   └── informe_semana15.md     # informe de cierre de la semana 15
 ├── evidencias/
 │   ├── salida_pruebas.txt      # 12 pruebas de persistencia (semana 13)
 │   ├── salida_pruebas_semana14.txt # 39 pruebas de la semana 14
+│   ├── salida_pruebas_semana15.txt # 44 pruebas de la semana 15
 │   ├── cobertura.txt           # cobertura de servicios (RNF-08)
 │   ├── rnf_desempeno.txt       # resultados de RNF-05
 │   ├── demo_api.txt            # peticiones y respuestas HTTP reales
+│   ├── integracion_ui.txt      # escenarios de integración de la interfaz
+│   ├── pantalla_ui.txt         # recorrido en navegador real
 │   ├── prueba.db               # base de la semana 13
-│   └── api.db / demo_api.db / rnf_desempeno.db # bases locales (no versionadas)
+│   └── api.db / demo_api.db / rnf_desempeno.db / integracion_ui.db # bases locales (no versionadas)
 └── plantilla/
     ├── plantilla_13_1.tex      # documento formal de la semana 13
-    └── plantilla_13_1.pdf      # versión compilada
+    ├── plantilla_13_1.pdf      # versión compilada
+    ├── plantilla_13_14.tex     # informe formal de las semanas 13 y 14
+    └── plantilla_13_14.pdf     # versión compilada
 ```
 
 ## 3. Arquitectura y responsabilidades
 
-Flujo del backend:
+Flujo completo del corte vertical:
 
 ```text
-HTTP -> API -> Servicio de aplicación -> Repositorio -> Base de datos
+Interfaz (/ui/) -> HTTP -> API (/api/v1) -> Servicio de aplicación -> Repositorio -> Base de datos
 ```
 
 | Capa | Dónde | Responsabilidad |
 |---|---|---|
+| Interfaz | `frontend/` | Mostrar los dos RF, conservar entradas, reflejar estados y mensajes; solo envía peticiones a la API. No guarda resultados ni aplica reglas de negocio. |
 | API | `api/main.py` | Recibir HTTP, validar la forma, delegar y traducir errores a códigos HTTP. No contiene reglas ni SQL. |
 | Servicio | `servicios/` | Coordinar el caso de uso, normalizar la respuesta y decidir la ausencia de una ficha. |
 | Repositorio | `persistencia/repositorio.py` | Todo el SQL, las validaciones de dominio y las transacciones. |
 | Base de datos | SQLite | `refugio`, `mascota`, `fotografia`, con CHECK, FK, índices y triggers. |
 
 Esto permite probar los servicios con un doble del repositorio (RNF-08) sin abrir
-una base real, y mantener el SQL fuera de la API.
+una base real, y mantener el SQL fuera de la API. La interfaz se sirve desde el
+mismo proceso y origen que la API, por lo que usa rutas relativas y no depende de
+CORS.
 
-## 4. Ejecutar la API
+## 4. Ejecutar la API y la interfaz
 
 ```powershell
 # 1) Crear o reiniciar la base con el estado inicial conocido
 python -m persistencia.inicializar_db
 
-# 2) Levantar la API
+# 2) Levantar la API (sirve también la interfaz)
 uvicorn api.main:app --reload --port 8000
 ```
 
 - Base URL: `http://127.0.0.1:8000/api/v1`
+- **Interfaz mínima: `http://127.0.0.1:8000/ui/`**
 - Documentación interactiva: `http://127.0.0.1:8000/docs`
 - OpenAPI: `http://127.0.0.1:8000/openapi.json`
 
@@ -123,7 +142,7 @@ Variables de entorno:
 | Variable | Valor por defecto | Uso |
 |---|---|---|
 | `DB_PATH` | `evidencias/api.db` | Ruta de la base SQLite. |
-| `CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000` | Orígenes permitidos para la interfaz de la semana 3. |
+| `CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000` | Orígenes permitidos para una interfaz externa futura; `/ui/` comparte origen con la API. |
 
 Reiniciar los datos de prueba:
 
@@ -165,15 +184,16 @@ Formato de error:
 > Hasta entonces, el refugio se envía como `refugio_id` en el cuerpo (POST/PUT)
 > o en la consulta (DELETE).
 
-## 6. Pruebas funcionales
+## 6. Pruebas funcionales e integración
 
 ```powershell
 python -m pytest -v
 ```
 
-Resultado: **39/39 pruebas pasan** en ~1,6 s
-(`evidencias/salida_pruebas_semana14.txt`). Aparece un aviso de deprecación de
-Starlette sobre `httpx`; no afecta los resultados.
+Resultado: **44/44 pruebas pasan** en ~2 s
+(`evidencias/salida_pruebas_semana15.txt`). Incluye 5 pruebas nuevas de
+integración de la interfaz. Aparece un aviso de deprecación de Starlette sobre
+`httpx`; no afecta los resultados.
 
 | RF | Escenario | Acción | Resultado obtenido | Evidencia |
 |---|---|---|---|---|
@@ -198,20 +218,46 @@ python -m pruebas.demo_api
 Genera `evidencias/demo_api.txt`: crea, consulta, actualiza, da de baja y
 verifica que la ficha dada de baja sale del catálogo.
 
-## 7. RNF y evidencias (matriz RF–RNF)
+### Integración desde la interfaz (semana 15)
 
-| RF / RNF | Calidad ISO/IEC 25010:2023 | Prueba y meta | Resultado | Evidencia |
-|---|---|---|---|---|
-| RF-05, RF-34 / **RNF-05** | Eficiencia de desempeño / comportamiento temporal | 1.000 fichas; 20 consultas consecutivas por HTTP; cada una ≤ 1 s | **20/20**; promedio 2,78 ms; p95 3,01 ms; máximo 3,05 ms | `evidencias/rnf_desempeno.txt` |
-| RF-05, RF-34 / **RNF-08** | Mantenibilidad / capacidad para ser probado | Doble del repositorio, sin base real; cobertura ≥ 70 % en servicios | **9/9** pruebas aisladas; **100 %** de cobertura en `servicios/` | `test_servicios_aislados.py`, `evidencias/cobertura.txt` |
-| RF-05, RF-34 / **RNF-10** | Seguridad / integridad | Matriz de entradas inválidas; 0 filas persistidas | **14/14** casos rechazados; 0 filas nuevas o modificadas | `test_rnf10_integridad.py`, `salida_pruebas_semana14.txt` |
-| RF-05, RF-34 / **RNF-04** | Seguridad / confidencialidad | Revisar claves del catálogo y la ficha pública | **0** campos personales | `test_rf34_api.py`, `demo_api.txt` |
-| RF-34 / **RNF-07** | Flexibilidad / escalabilidad | 2.000 fichas y 5.000 adoptantes; p95 ≤ 1 s | **Pendiente** para la semana 3 | — |
+La pantalla `/ui/` envía las solicitudes de los contratos vigentes mediante
+`fetch`; no simula respuestas ni guarda el resultado en el navegador. Para
+reproducir los escenarios con HTTP real:
+
+```powershell
+python -m pruebas.demo_integracion
+```
+
+Genera `evidencias/integracion_ui.txt`: interfaz servida, creación con `id`
+real, rechazos `ERR-004`/`ERR-009`, edición, baja, paginación, ausencia, persistencia
+tras reiniciar el backend y fallo de comunicación. `evidencias/pantalla_ui.txt`
+registra el mismo recorrido ejecutado en un navegador real.
+
+| Escenario desde la pantalla | Resultado observable |
+|---|---|
+| Consultar catálogo, crear ficha y recargar | ids `[1, 3, 2]` → creación id `7` → ids `[1, 3, 2, 7]` desde la API |
+| Editar y dar de baja el id `7` | `200` con nombre actualizado; `204`; ids `[1, 3, 2]` |
+| Ausencia y entrada inválida | `total 0` con tabla vacía; `400 ERR-004` con mensaje orientador |
+| Rechazo de negocio al crear | `409 ERR-009`; el nombre escrito se conserva |
+| Backend detenido | Mensaje de "resultado no confirmado", sin reintento ni éxito falso; tabla limpiada |
+
+El detalle de los 13 escenarios y la matriz RF–RNF final están en
+[`docs/informe_semana15.md`](docs/informe_semana15.md).
+
+## 7. RNF y evidencias (matriz RF–RNF final)
+
+| RF / RNF | Característica ISO/IEC 25010:2023 | Prueba y meta | Resultado | Estado | Evidencia |
+|---|---|---|---|---|---|
+| RF-05, RF-34 / **RNF-04** | Seguridad / confidencialidad | Revisar claves del catálogo y la ficha pública | **0** campos personales | **Cumple** | `test_rf34_api.py`, `demo_api.txt` |
+| RF-05, RF-34 / **RNF-05** | Eficiencia de desempeño / comportamiento temporal | 1.000 fichas; 20 consultas consecutivas por HTTP; cada una ≤ 1 s | **20/20**; mín. 4,75 ms; prom. 6,14 ms; p95 7,52 ms; máx. 7,76 ms | **Cumple en alcance secuencial**; **no verificado** con 50 usuarios | `pruebas/rnf_desempeno.py`, `evidencias/rnf_desempeno.txt` |
+| RF-05, RF-34 / **RNF-08** | Mantenibilidad / capacidad para ser probado | Doble del repositorio, sin base real; cobertura ≥ 70 % en servicios | **9/9** pruebas aisladas; **100 %** de cobertura en 33 sentencias | **Cumple** | `test_servicios_aislados.py`, `evidencias/cobertura.txt` |
+| RF-05, RF-34 / **RNF-10** | Seguridad / integridad | Matriz de entradas inválidas; 0 filas persistidas | **14/14** casos rechazados; 0 filas nuevas o modificadas | **Cumple** | `test_rnf10_integridad.py`, `salida_pruebas_semana14.txt` |
+| RF-34 / **RNF-07** | Flexibilidad / escalabilidad | 2.000 fichas y 5.000 adoptantes; p95 ≤ 1 s | Sin medición | **No verificado** — pendiente de la semana 3 | — |
 
 Comandos de las verificaciones:
 
 ```powershell
-# RNF-08: cobertura de los servicios
+# RNF-08: cobertura de los servicios (se repite en la semana 15)
 python -m coverage run -m pytest -q
 python -m coverage report -m
 
@@ -222,8 +268,9 @@ python -m pruebas.rnf_desempeno
 **Lectura honesta del RNF-05:** la meta de la plantilla incluye 500 fichas y 50
 usuarios concurrentes. Aquí se usó un volumen mayor (1.000 fichas) pero la
 medición es **secuencial**, no concurrente. Por eso el resultado se declara
-**cumplido en lo secuencial** y la prueba de 50 usuarios queda para la semana 3.
-No se rebajó el umbral: cada consulta se exigió ≤ 1 s.
+**cumplido en lo secuencial** y la prueba de 50 usuarios sigue pendiente. No se
+rebajó el umbral: cada consulta se exigió ≤ 1 s. RNF-07 continúa **no verificado**:
+la interfaz no cambia esa condición.
 
 ## 8. Checklist de entrega
 
@@ -232,11 +279,13 @@ No se rebajó el umbral: cada consulta se exigió ≤ 1 s.
 | Los dos RF mantienen prioridad y alcance de la semana 1 | Sí | Tabla de alcance y `plantilla/plantilla_13_1.pdf` |
 | Ambos RF tienen servicios y endpoints identificables | Sí | `servicios/` y `api/main.py` |
 | Los contratos describen éxito, entrada inválida y errores | Sí | `docs/contratos_api.md` y `/docs` |
-| Hay resultado válido y rechazo/ausencia por cada RF | Sí | Tabla de la sección 6 |
-| Se verifica persistencia real y ausencia de escrituras indebidas | Sí | Pruebas con SQLite y conteos antes/después |
+| La interfaz ejecuta ambos RF contra la API real | Sí | `/ui/` y `evidencias/pantalla_ui.txt` |
+| Hay resultado válido y rechazo/ausencia por cada RF | Sí | Secciones 6 y `evidencias/integracion_ui.txt` |
+| Se verifica persistencia real y ausencia de escrituras indebidas | Sí | Recarga, conexión nueva y reinicio del backend |
+| Los fallos de comunicación no confirman resultados no verificados | Sí | `pantalla_ui.txt` y `test_integracion_ui.py` |
 | El SQL queda en persistencia y las reglas en servicio/dominio | Sí | Sección 3 y `repositorio.py` |
 | Cada RF se vincula con sus RNF y atributos ISO | Sí | Sección 7 |
-| Los RNF previstos tienen medidas y evidencias | Sí | RNF-04, 05, 08 y 10; RNF-07 pendiente |
+| La matriz final distingue cumplidos, parciales y no verificados | Sí | RNF-05 secuencial y RNF-07 no verificado |
 | Se distinguen incumplimientos y pendientes de la semana 3 | Sí | Secciones 7 y 10 |
 | El README permite ejecutar y repetir las pruebas | Sí | Comandos de las secciones 4, 6 y 7 |
 
@@ -279,26 +328,37 @@ Salida esperada: `RESUMEN: 12/12 pruebas pasaron`
 
 ## 10. Estado, pendientes y relevo a la semana 3
 
-**Implementado y verificado en la semana 14**
+**Implementado y verificado en la semana 15**
 
-- Servicios de aplicación de RF-05 y RF-34.
-- API REST con cuatro endpoints, contratos, errores y CORS.
-- 39 pruebas funcionales, de integridad y de servicios aislados.
-- RNF-04, RNF-05 (secuencial), RNF-08 y RNF-10 con evidencia reproducible.
-- Demostración HTTP real de ambos RF.
+- Interfaz mínima en `/ui/` para crear, editar, dar de baja y consultar, servida
+  por FastAPI en el mismo origen que la API.
+- Manejo de estados, rechazos y ausencia con mensajes comprensibles; entradas
+  conservadas y controles operables con teclado.
+- Fallos `5xx` y de `fetch` tratados como comunicación incierta: sin reintento
+  automático ni confirmación falsa.
+- 5 pruebas nuevas de integración (44/44 en total) y demostración reproducible
+  con HTTP real y SQLite.
+- Matriz RF–RNF final con RNF-05 en alcance secuencial y RNF-07 no verificado.
+
+**Implementado en las semanas 13 y 14**
+
+- Esquema, repositorio, servicios de RF-05 y RF-34 y API REST con cuatro endpoints.
+- Contratos, traducción de errores y CORS.
+- RNF-04, RNF-08 y RNF-10 con evidencia; RNF-05 medido en alcance secuencial.
 
 **Pendiente para la semana 3**
 
 - Autenticación, roles y reemplazo de `refugio_id` explícito por el usuario autenticado.
-- Pantalla de ficha y catálogo (React/Vite) contra esta API.
+- Ampliación de la interfaz mínima sin convertirla en un portal (la pantalla ya
+  cubre los dos RF del corte).
 - Prueba de concurrencia de RNF-05 (50 usuarios) y RNF-07 (2.000 fichas, 5.000 adoptantes).
 - Migración y verificación en PostgreSQL (ADR-03/ADR-10).
-- Almacenamiento binario de fotos (hoy se guarda la ruta).
+- Almacenamiento binario de fotos (hoy se guarda el nombre de archivo).
 - Rechazo automático de solicitudes pendientes al dar de baja (RN-15), fuera de este corte.
 
-**Relevo a la interfaz:** contratos en `docs/contratos_api.md`, origen CORS
-`http://localhost:5173`, datos iniciales con `python -m persistencia.inicializar_db`
-y RNF pendientes marcados en la sección 7.
+**Estado para la semana 3:** contratos en `docs/contratos_api.md`, interfaz en
+`/ui/`, datos iniciales con `python -m persistencia.inicializar_db` y RNF
+pendientes marcados en la sección 7.
 
 ## 11. Trazabilidad rápida
 
@@ -306,23 +366,32 @@ y RNF pendientes marcados en la sección 7.
 |---|---|
 | RF-05 | `servicios/servicio_mascotas.py`, `api/main.py` (POST/PUT/DELETE), `test_rf05_api.py` |
 | RF-34 | `servicios/servicio_catalogo.py`, `api/main.py` (GET), `test_rf34_api.py` |
+| Interfaz | `frontend/index.html`, `frontend/app.js`, `frontend/styles.css` y `/ui/` en `api/main.py` |
+| Integración UI | `pruebas/test_integracion_ui.py`, `pruebas/demo_integracion.py`, `evidencias/integracion_ui.txt` y `evidencias/pantalla_ui.txt` |
 | Contratos | `docs/contratos_api.md`, `/docs` y `/openapi.json` |
 | RNF-04 | `test_catalogo_sin_datos_personales_rnf04` |
 | RNF-05 | `pruebas/rnf_desempeno.py` y `evidencias/rnf_desempeno.txt` |
 | RNF-08 | `pruebas/test_servicios_aislados.py` y `evidencias/cobertura.txt` |
 | RNF-10 | `pruebas/test_rnf10_integridad.py` y `evidencias/salida_pruebas_semana14.txt` |
-| RNF-07 | Pendiente de la semana 3 |
+| RNF-07 | No verificado; pendiente de la semana 3 |
 | Persistencia | `persistencia/schema.sql`, `repositorio.py` y `salida_pruebas.txt` |
 | Plantilla 13.1 | `plantilla/plantilla_13_1.pdf` y `plantilla/plantilla_13_1.tex` |
 | Informe 13 y 14 | `docs/informe_semanas_13_14.md`, `plantilla/plantilla_13_14.tex` y `plantilla/plantilla_13_14.pdf` |
+| Informe 15 | `docs/informe_semana15.md` |
 
-## 12. Documento de las semanas 13 y 14
+## 12. Documentos de las semanas 13 a 15
 
 [`docs/informe_semanas_13_14.md`](docs/informe_semanas_13_14.md) reúne en un
 solo documento la persistencia de la semana 13 y los servicios, contratos,
-pruebas y RNF de la semana 14. Es el texto de lectura continua de la entrega;
+pruebas y RNF de la semana 14. Es el texto de lectura continua de esa entrega;
 los detalles operativos están en el README y en
 [`docs/contratos_api.md`](docs/contratos_api.md).
+
+[`docs/informe_semana15.md`](docs/informe_semana15.md) cierra el corte: describe
+la interacción de los dos RF, la conexión con los contratos vigentes, los 13
+escenarios de integración, la matriz RF–RNF final, el checklist y las
+limitaciones. RNF-05 queda como **cumple en alcance secuencial** y RNF-07 como
+**no verificado**.
 
 `plantilla/plantilla_13_1.tex` se mantiene como documento formal de la semana
 13 (portada, alcance, priorización, matriz RF–RNF, fichas y checklist). Se
