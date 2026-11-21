@@ -10,12 +10,14 @@ from __future__ import annotations
 
 import logging
 import os
+from pathlib import Path as Ruta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, FastAPI, Path, Query, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from api.dependencias import obtener_servicio_catalogo, obtener_servicio_mascotas
 from api.esquemas import (
@@ -205,6 +207,14 @@ def raiz() -> dict:
     return {
         "servicio": "API de adopción responsable de mascotas",
         "version": "1.0.0",
+        "interfaz": "/ui/",
         "documentacion": "/docs",
         "openapi": "/openapi.json",
     }
+
+
+# La interfaz se sirve desde el mismo origen que la API: no hay CORS que
+# configurar en el navegador y el recorrido interfaz -> API usa rutas relativas.
+RUTA_FRONTEND = Ruta(__file__).resolve().parent.parent / "frontend"
+if RUTA_FRONTEND.is_dir():
+    app.mount("/ui", StaticFiles(directory=RUTA_FRONTEND, html=True), name="ui")
