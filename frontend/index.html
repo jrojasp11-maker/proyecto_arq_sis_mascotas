@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Corte vertical — Adopción responsable de mascotas</title>
+  <link rel="stylesheet" href="/ui/styles.css">
+</head>
+<body>
+  <header>
+    <h1>Adopción responsable de mascotas</h1>
+    <p>Interfaz mínima del corte vertical: RF-05 (ficha) y RF-34 (catálogo). Consume la API real en <code>/api/v1</code>.</p>
+  </header>
+
+  <main>
+    <section aria-labelledby="titulo-rf05">
+      <h2 id="titulo-rf05">RF-05 — Gestionar la ficha de una mascota</h2>
+
+      <form id="form-crear" novalidate>
+        <fieldset>
+          <legend>Crear ficha</legend>
+          <p class="ayuda">Los campos marcados con <strong>*</strong> son obligatorios. El backend decide el estado final.</p>
+
+          <div class="rejilla">
+            <label for="refugio_id">Refugio que publica *</label>
+            <select id="refugio_id" name="refugio_id" required>
+              <option value="1">1 — Patitas (verificado)</option>
+              <option value="2">2 — Colitas (pendiente, prueba de rechazo)</option>
+            </select>
+
+            <label for="nombre">Nombre *</label>
+            <input id="nombre" name="nombre" type="text" maxlength="60" required value="Nala">
+
+            <label for="raza">Raza aproximada</label>
+            <input id="raza" name="raza" type="text" maxlength="80" value="Mestiza">
+
+            <label for="especie">Especie *</label>
+            <select id="especie" name="especie" required>
+              <option value="perro">perro</option>
+              <option value="gato">gato</option>
+              <option value="conejo">conejo (prueba de rechazo)</option>
+            </select>
+
+            <label for="edad_meses">Edad en meses *</label>
+            <input id="edad_meses" name="edad_meses" type="number" min="0" max="300" required value="24">
+
+            <label for="tamano">Tamaño *</label>
+            <select id="tamano" name="tamano" required>
+              <option value="pequeno">pequeño</option>
+              <option value="mediano" selected>mediano</option>
+              <option value="grande">grande</option>
+            </select>
+
+            <label for="nivel_energia">Nivel de energía *</label>
+            <select id="nivel_energia" name="nivel_energia" required>
+              <option value="baja">baja</option>
+              <option value="media" selected>media</option>
+              <option value="alta">alta</option>
+            </select>
+
+            <label for="experiencia_requerida">Experiencia requerida *</label>
+            <select id="experiencia_requerida" name="experiencia_requerida" required>
+              <option value="basica" selected>básica</option>
+              <option value="intermedia">intermedia</option>
+              <option value="avanzada">avanzada</option>
+            </select>
+
+            <label for="fecha_publicacion">Fecha de publicación (AAAA-MM-DD) *</label>
+            <input id="fecha_publicacion" name="fecha_publicacion" type="date" required value="2026-11-20">
+
+            <label for="fotografias">Fotografías (nombres separados por coma; 0 a 5)</label>
+            <input id="fotografias" name="fotografias" type="text" value="nala_01.jpg, nala_02.jpg">
+
+            <label for="historial_salud">Historial de salud</label>
+            <input id="historial_salud" name="historial_salud" type="text" maxlength="1000" value="Vacunas al día">
+
+            <label for="historial_comportamiento">Historial de comportamiento</label>
+            <input id="historial_comportamiento" name="historial_comportamiento" type="text" maxlength="1000" value="Sociable">
+          </div>
+
+          <div class="casillas">
+            <label><input id="apta_con_menores" type="checkbox" checked> Apta con menores</label>
+            <label><input id="apta_con_mascotas" type="checkbox" checked> Apta con mascotas</label>
+          </div>
+
+          <div class="acciones">
+            <button id="btn-crear" type="submit">Crear ficha</button>
+            <span id="estado-crear" class="estado" role="status" aria-live="polite"></span>
+          </div>
+          <p id="resultado-crear" class="mensaje" role="status" aria-live="polite"></p>
+        </fieldset>
+      </form>
+
+      <form id="form-editar" novalidate>
+        <fieldset>
+          <legend>Editar o dar de baja una ficha</legend>
+          <p class="ayuda">Use el <strong>id</strong> devuelto por la API al crear. Estas acciones también llegan al repositorio.</p>
+          <div class="rejilla corta">
+            <label for="id-editar">Id de la ficha *</label>
+            <input id="id-editar" type="number" min="1" required placeholder="por ejemplo, 7">
+
+            <label for="refugio-editar">Refugio dueño *</label>
+            <select id="refugio-editar" required>
+              <option value="1">1 — Patitas (verificado)</option>
+              <option value="2">2 — Colitas (pendiente)</option>
+            </select>
+
+            <label for="nombre-editar">Nuevo nombre</label>
+            <input id="nombre-editar" type="text" maxlength="60" value="Nala actualizada">
+          </div>
+          <div class="acciones">
+            <button id="btn-editar" type="button">Actualizar nombre</button>
+            <button id="btn-baja" type="button">Dar de baja</button>
+            <span id="estado-editar" class="estado" role="status" aria-live="polite"></span>
+          </div>
+          <p id="resultado-editar" class="mensaje" role="status" aria-live="polite"></p>
+        </fieldset>
+      </form>
+    </section>
+
+    <section aria-labelledby="titulo-rf34">
+      <h2 id="titulo-rf34">RF-34 — Consultar el catálogo</h2>
+      <form id="form-catalogo" novalidate>
+        <fieldset>
+          <legend>Filtros y paginación</legend>
+          <div class="rejilla">
+            <label for="filtro-especie">Especie</label>
+            <select id="filtro-especie">
+              <option value="">(todas)</option>
+              <option value="perro">perro</option>
+              <option value="gato">gato</option>
+              <option value="conejo">conejo (prueba de rechazo)</option>
+            </select>
+
+            <label for="filtro-tamano">Tamaño</label>
+            <select id="filtro-tamano">
+              <option value="">(todos)</option>
+              <option value="pequeno">pequeño</option>
+              <option value="mediano">mediano</option>
+              <option value="grande">grande</option>
+            </select>
+
+            <label for="filtro-edad-min">Edad mínima (meses)</label>
+            <input id="filtro-edad-min" type="number" min="0" placeholder="sin mínimo">
+
+            <label for="filtro-edad-max">Edad máxima (meses)</label>
+            <input id="filtro-edad-max" type="number" min="0" placeholder="sin máximo">
+
+            <label for="filtro-pagina">Página</label>
+            <input id="filtro-pagina" type="number" min="1" value="1" required>
+
+            <label for="filtro-por-pagina">Por página</label>
+            <input id="filtro-por-pagina" type="number" min="1" max="100" value="20" required>
+          </div>
+          <div class="acciones">
+            <button id="btn-consultar" type="submit">Consultar catálogo</button>
+            <span id="estado-catalogo" class="estado" role="status" aria-live="polite"></span>
+          </div>
+          <p id="resultado-catalogo" class="mensaje" role="status" aria-live="polite"></p>
+        </fieldset>
+      </form>
+
+      <table>
+        <caption>Mascotas devueltas por la API</caption>
+        <thead>
+          <tr><th>Id</th><th>Nombre</th><th>Especie</th><th>Tamaño</th><th>Edad</th><th>Refugio</th></tr>
+        </thead>
+        <tbody id="cuerpo-catalogo"></tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer>
+    <p>Recorrido: interfaz → API → servicio → repositorio → base de datos. Los estados y las reglas los decide el backend.</p>
+  </footer>
+
+  <script src="/ui/app.js"></script>
+</body>
+</html>
