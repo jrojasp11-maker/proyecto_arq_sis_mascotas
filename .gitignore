@@ -15,4 +15,6 @@ Thumbs.db
 evidencias/api.db
 evidencias/demo_api.db
 evidencias/rnf_desempeno.db
+evidencias/rnf_concurrencia.db
+evidencias/rnf_escalabilidad.db
 evidencias/integracion_ui.db

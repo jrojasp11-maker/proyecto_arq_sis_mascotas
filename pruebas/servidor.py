@@ -20,19 +20,28 @@ def _puerto_libre() -> int:
 
 
 @contextlib.contextmanager
-def servidor_api(ruta_db: str, puerto: int | None = None) -> Iterator[str]:
-    """Levanta la API en un hilo y entrega la URL base; la apaga al salir."""
+def servidor_api(
+    ruta_db: str, puerto: int | None = None, workers: int = 1
+) -> Iterator[str]:
+    """Levanta la API y entrega la URL base; la apaga al salir.
+
+    ``workers`` permite reproducir una instalación con varios procesos, como
+    ocurre en un despliegue real. Con un solo proceso se usa el objeto ``app``
+    directamente para no depender del importador de Uvicorn.
+    """
     from api.main import app
 
     os.environ["DB_PATH"] = str(ruta_db)
     puerto = puerto or _puerto_libre()
+    objetivo = "api.main:app" if workers > 1 else app
 
     configuracion = uvicorn.Config(
-        app,
+        objetivo,
         host="127.0.0.1",
         port=puerto,
         log_level="warning",
         access_log=False,
+        workers=workers,
     )
     servidor = uvicorn.Server(configuracion)
     hilo = threading.Thread(

@@ -6,8 +6,8 @@ Escenario:
   - 20 consultas consecutivas al catálogo por HTTP real.
   - Umbral: cada consulta debe responder en <= 1.000 ms.
 
-No sustituye la prueba de concurrencia de la semana 3; mide el comportamiento
-temporal secuencial sobre la API.
+La concurrencia de 50 usuarios y RNF-07 se verifican en
+``pruebas/rnf_escalabilidad.py``; aquí se conserva la medición secuencial.
 
 Uso:
     python -m pruebas.rnf_desempeno
@@ -42,15 +42,16 @@ CONSULTAS = 20
 UMBRAL_MS = 1000.0
 
 
-def recrear_base() -> int:
-    """Recrea la base y deja exactamente ``FICHAS`` fichas publicadas."""
+def recrear_base(cantidad: int = FICHAS, ruta_db: Path | str = RUTA_DB) -> int:
+    """Recrea la base indicada y deja exactamente ``cantidad`` fichas publicadas."""
+    ruta_db = Path(ruta_db)
     EVIDENCIAS.mkdir(parents=True, exist_ok=True)
-    if RUTA_DB.exists():
-        RUTA_DB.unlink()
+    if ruta_db.exists():
+        ruta_db.unlink()
 
     base = dt.date(2026, 1, 1)
     fichas = []
-    for indice in range(1, FICHAS + 1):
+    for indice in range(1, cantidad + 1):
         fichas.append(
             (
                 1,
@@ -67,7 +68,7 @@ def recrear_base() -> int:
             )
         )
 
-    with closing(sqlite3.connect(RUTA_DB)) as conexion:
+    with closing(sqlite3.connect(ruta_db)) as conexion:
         conexion.executescript(SCHEMA.read_text(encoding="utf-8"))
         conexion.executescript(SEED.read_text(encoding="utf-8"))
         conexion.execute("DELETE FROM fotografia")
@@ -89,6 +90,7 @@ def recrear_base() -> int:
             "INSERT INTO fotografia (mascota_id, archivo, orden) VALUES (?, ?, 1)",
             [(mascota_id, f"mascota_{mascota_id:04d}.jpg") for mascota_id in identificadores],
         )
+        conexion.execute("PRAGMA journal_mode = WAL")
         conexion.commit()
         return int(conexion.execute("SELECT COUNT(*) FROM mascota").fetchone()[0])
 

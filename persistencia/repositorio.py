@@ -173,9 +173,12 @@ class RepositorioMascotas:
     # Conexión
     # ------------------------------------------------------------------
     def _conectar(self) -> sqlite3.Connection:
-        conexion = sqlite3.connect(self.ruta_db)
+        conexion = sqlite3.connect(self.ruta_db, timeout=10)
         conexion.row_factory = sqlite3.Row
         conexion.execute("PRAGMA foreign_keys = ON")
+        # El modo WAL se activa una sola vez al crear la base. Aqui solo se
+        # configura la espera para no fallar si otro hilo tiene la base abierta.
+        conexion.execute("PRAGMA busy_timeout = 5000")
         return conexion
 
     # ------------------------------------------------------------------

@@ -36,6 +36,8 @@ def inicializar(ruta: str | Path | None = None) -> Path:
     with closing(sqlite3.connect(destino)) as conexion:
         conexion.executescript(SCHEMA.read_text(encoding="utf-8"))
         conexion.executescript(SEED.read_text(encoding="utf-8"))
+        # WAL permite lecturas concurrentes del catalogo sin bloquear escrituras.
+        conexion.execute("PRAGMA journal_mode = WAL")
         conexion.commit()
 
     return destino
