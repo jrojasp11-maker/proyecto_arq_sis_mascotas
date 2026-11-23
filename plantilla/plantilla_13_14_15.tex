@@ -121,7 +121,7 @@
 \textbf{Docente:} & Elias Buitrago Bolivar \\[3mm]
 \textbf{Integrantes:} & Juan Diego Rojas y Adrián Camaño \\[3mm]
 \textbf{Fecha:} & 20 de noviembre de 2026 \\[3mm]
-\textbf{Estado:} & 12/12, 39/39 y 44/44 pruebas; integración verificada \\
+\textbf{Estado:} & 12/12, 39/39 y 53/53 pruebas; Supabase y roles verificados \\
 \end{tabular}}
 
 \vfill
@@ -137,7 +137,8 @@ Este documento reúne el trabajo de las semanas 13, 14 y 15 sobre el mismo corte
 vertical. La semana 13 construyó la base de datos y la capa de persistencia; la
 semana 14 agregó los servicios de aplicación, la API REST, los contratos y la
 verificación de los requisitos no funcionales; la semana 15 incorporó la interfaz
-mínima que consume la API real y cerró la matriz RF--RNF. Las tres semanas
+mínima que consume la API real, cerró la matriz RF--RNF y completó la
+autenticación por rol y la migración a PostgreSQL en Supabase. Las tres semanas
 conservan los mismos dos requisitos funcionales priorizados.
 
 {\footnotesize
@@ -150,10 +151,11 @@ conservan los mismos dos requisitos funcionales priorizados.
 39/39 pruebas; 100\,\% de cobertura en servicios &
 \code{salida\_pruebas\_semana14.txt}, \code{cobertura.txt},
 \code{rnf\_desempeno.txt} y \code{demo\_api.txt} \\
-\textbf{15} & Interfaz mínima, integración con la API real y cierre RF--RNF &
-44/44 pruebas; 13 escenarios de integración &
-\code{salida\_pruebas\_semana15.txt}, \code{integracion\_ui.txt},
-\code{pantalla\_ui.txt} e \code{informe\_semana15.md} \\
+\textbf{15} & Interfaz, roles, Supabase e integración con la API real &
+53/53 pruebas; 13 escenarios de integración; RNF en Supabase &
+\code{salida\_pruebas\_supabase.txt}, \code{integracion\_ui.txt},
+\code{supabase\_verificacion.txt}, \code{rnf\_supabase.txt} e
+\code{informe\_semana15.md} \\
 \bottomrule
 \end{tabularx}
 }
@@ -173,11 +175,11 @@ edad, con paginación y orden estable. \\
 \end{tabularx}
 }
 
-\textbf{Stack:} Python 3.12.10, FastAPI 0.162.2, Pydantic v2, Uvicorn 0.54.0 y
-SQLite 3.49.1. La interfaz es HTML, CSS y JavaScript servidos por la propia
-FastAPI en \code{/ui/}, sin framework adicional. SQLite se usa para reproducir
-el corte sin instalar un servidor; la base objetivo del proyecto sigue siendo
-PostgreSQL (ADR-03/ADR-10).
+\textbf{Stack:} Python 3.12.10, FastAPI, Pydantic v2, Uvicorn, PostgreSQL en
+Supabase (esquema \code{aqsis}), SQLAlchemy, psycopg y PyJWT. SQLite 3.49.1 se
+conserva como modo local y de pruebas. La interfaz es HTML, CSS y JavaScript
+servidos por la propia FastAPI en \code{/ui/}, sin framework adicional. La
+autenticación usa JWT HS256 y contraseñas hasheadas con PBKDF2.
 
 % =====================================================================
 % 2. Contexto
@@ -196,8 +198,9 @@ decisiones de arquitectura; no se construye el sistema completo, sino un
 Un corte vertical es una porción pequeña del sistema que se construye de punta a
 punta. En este proyecto avanza en tres momentos: la semana 13 cubre la base de
 datos y la persistencia; la semana 14, los servicios y la API; la semana 15, la
-interfaz mínima y el cierre de la matriz RF--RNF. La semana 3 del prototipo
-retoma autenticación, concurrencia y carga.
+interfaz mínima, el cierre de la matriz RF--RNF, la autenticación por rol y la
+migración a PostgreSQL. La concurrencia y la carga quedaron verificadas en
+local y contra Supabase.
 
 \subsection{Los dos requisitos funcionales}
 
@@ -235,11 +238,12 @@ Filtro del catálogo y baja lógica \\
 
 \subsection{Fuera del alcance}
 
-Autenticación y roles, interfaz web completa, almacenamiento binario de fotos,
-motor de recomendaciones, solicitudes y decisiones de adopción, seguimiento
-posadopción, notificaciones, indicadores, chatbot y reconocimiento de imágenes.
-La interfaz de la semana 15 es una pantalla mínima para ejecutar los dos RF, no
-un portal. La migración definitiva a PostgreSQL se hará al cerrar el prototipo.
+Interfaz web completa, almacenamiento binario de fotos, motor de recomendaciones,
+solicitudes y decisiones de adopción, seguimiento posadopción, notificaciones,
+indicadores, chatbot y reconocimiento de imágenes. La autenticación por rol y la
+migración a PostgreSQL sí quedaron incluidas: se implementaron sin cambiar
+rutas ni claves JSON. La interfaz de la semana 15 es una pantalla mínima para
+ejecutar los dos RF, no un portal.
 
 \clearpage
 
@@ -405,24 +409,26 @@ La evidencia completa está en \code{evidencias/salida\_pruebas.txt}.
 \subsection{Arquitectura por capas}
 
 \begin{center}
-\code{HTTP} $\rightarrow$ \code{API} $\rightarrow$
+\code{HTTP + JWT} $\rightarrow$ \code{API} $\rightarrow$
 \code{Servicio de aplicación} $\rightarrow$ \code{Repositorio} $\rightarrow$
-\code{SQLite}
+\code{SQLite / PostgreSQL (Supabase)}
 \end{center}
 
 {\footnotesize
 \begin{tabularx}{\linewidth}{@{}V{0.55}V{1.05}V{1.4}@{}}
 \toprule
 \thead{Capa} & \thead{Archivo} & \thead{Responsabilidad} \\ \midrule
-API & \code{api/main.py} & Recibir HTTP, validar la forma, delegar y traducir
-errores a códigos HTTP. No contiene reglas ni SQL. \\
-Contratos & \code{api/esquemas.py} & Modelos Pydantic v2 de entrada y salida. \\
-Inyección & \code{api/dependencias.py} & Crear el repositorio y los servicios;
-la base se toma de \code{DB\_PATH}. \\
+Seguridad & \code{seguridad/autenticacion.py} & Hashes PBKDF2, JWT HS256, roles
+y verificación de propietario. \\
+API & \code{api/main.py} & Recibir HTTP, autenticar, validar la forma, delegar y
+traducir errores. No contiene reglas ni SQL. \\
+Contratos & \code{api/esquemas.py} & Modelos Pydantic v2; incluye \code{Login}. \\
+Inyección & \code{api/dependencias.py} & Selecciona PostgreSQL si existe
+\code{DATABASE\_URL}; si no, usa \code{DB\_PATH}. \\
 Servicios & \code{servicios/} & Coordinar el caso de uso, normalizar la
 respuesta y decidir la ausencia de una ficha. \\
-Repositorio & \code{persistencia/repositorio.py} & Todo el SQL, las validaciones
-de dominio y las transacciones. \\
+Repositorio & \code{persistencia/} & Todo el SQL, las validaciones de dominio y
+las transacciones en ambos motores. \\
 \bottomrule
 \end{tabularx}
 }
@@ -459,15 +465,19 @@ Base local: \url{http://127.0.0.1:8000/api/v1}. Documentación interactiva:
 \toprule
 \thead{RF} & \thead{Método y ruta} & \thead{Servicio} & \thead{Éxito} &
 \thead{Errores posibles} \\ \midrule
+Auth & \code{POST /auth/token} & \code{seguridad.autenticacion} &
+200 JWT firmado & 401 ERR-401 \\
 RF-05 & \code{POST /mascotas} & \code{ServicioMascotas.crear} &
-201 ficha creada & 400 ERR-004, 404 ERR-008, 409 ERR-009 \\
+201 ficha creada & 400 ERR-004, 401 ERR-401, 403 ERR-003/ERR-403,
+404 ERR-008, 409 ERR-009 \\
 RF-05 & \code{PUT /mascotas/\{id\}} & \code{ServicioMascotas.actualizar} &
-200 ficha actualizada & 400 ERR-004, 403 ERR-003, 404 ERR-011 \\
+200 ficha actualizada & 400 ERR-004, 401 ERR-401, 403 ERR-003/ERR-403,
+404 ERR-011 \\
 RF-05 & \code{DELETE /mascotas/\{id\}?refugio\_id=\{id\}} &
 \code{ServicioMascotas.dar\_de\_baja} & 204 sin cuerpo &
-400 ERR-004, 403 ERR-003, 404 ERR-011 \\
+400 ERR-004, 401 ERR-401, 403 ERR-003/ERR-403, 404 ERR-011 \\
 RF-34 & \code{GET /mascotas} & \code{ServicioCatalogo.listar} &
-200 página del catálogo & 400 ERR-004 \\
+200 página del catálogo & 400 ERR-004, 401 ERR-401 \\
 \bottomrule
 \end{tabularx}
 }
@@ -488,6 +498,8 @@ ERR-006 & 409 & Violación de integridad de la base. \\
 ERR-008 & 404 & El refugio no existe. \\
 ERR-009 & 409 & El refugio no está verificado. \\
 ERR-011 & 404 & La ficha no existe. \\
+ERR-401 & 401 & Token o credenciales ausentes, inválidos o expirados. \\
+ERR-403 & 403 & El rol autenticado no puede ejecutar la operación. \\
 \bottomrule
 \end{tabularx}
 }
@@ -495,6 +507,31 @@ ERR-011 & 404 & La ficha no existe. \\
 Las validaciones de forma también responden 400 con ERR-004 (no 422), para
 mantener un único contrato de error. Un fallo inesperado responde 500 con
 ERR-500 y se registra sin exponer detalles técnicos.
+
+\subsection{Autenticación}
+
+\code{POST /auth/token} es el único endpoint nuevo. Recibe \code{usuario} y
+\code{contrasena}; la credencial de demostración no se publica. Devuelve
+\code{access\_token}, \code{token\_type}, \code{rol},
+\code{refugio\_id} y \code{expires\_in}.
+
+\begin{lstlisting}
+POST /auth/token
+{ "usuario": "refugio", "contrasena": "<credencial-demo>" }
+
+200 OK
+{
+  "access_token": "<jwt-hs256>",
+  "token_type": "bearer",
+  "rol": "refugio",
+  "refugio_id": 1,
+  "expires_in": 3600
+}
+\end{lstlisting}
+
+Todas las rutas posteriores envían \code{Authorization: Bearer TOKEN}. El token
+se firma con JWT HS256, se verifica con PBKDF2-HMAC-SHA256 y vive solo en
+memoria en el navegador.
 
 \subsection{Ejemplos de los contratos}
 
@@ -585,14 +622,15 @@ condiciones límite, está en \code{docs/contratos\_api.md}.
 \subsection{Decisiones de diseño}
 
 \begin{itemize}
-\item \textbf{Actor temporal.} La autenticación y los roles se integran en la
-  semana 3. Mientras tanto, el refugio que actúa se envía como
-  \code{refugio\_id} en el cuerpo (POST/PUT) o en la consulta (DELETE).
+\item \textbf{Roles y propietario.} Los roles \code{refugio},
+  \code{adoptante} y \code{admin} se verifican con JWT. Las mutaciones
+  requieren \code{refugio} o \code{admin}; el token se contrasta con el
+  \code{refugio\_id} documentado.
 \item \textbf{Validación en dos niveles.} Pydantic valida la forma y el
   repositorio valida el dominio; ambos errores se traducen a ERR-004.
-\item \textbf{Base configurable.} La ruta de SQLite se lee de \code{DB\_PATH} en
-  cada petición, lo que permite aislar las pruebas sin tocar la base de
-  desarrollo.
+\item \textbf{Base configurable.} Si existe \code{DATABASE\_URL} se usa
+  PostgreSQL en Supabase (esquema \code{aqsis}); si no, se usa SQLite con
+  \code{DB\_PATH}. El repositorio oculta el motor a los servicios.
 \item \textbf{CORS preparado.} Los orígenes por defecto son
   \code{http://localhost:5173}, \code{http://127.0.0.1:5173} y
   \code{http://localhost:3000}, configurables con \code{CORS\_ORIGINS}.
@@ -601,6 +639,10 @@ condiciones límite, está en \code{docs/contratos\_api.md}.
 \item \textbf{Sin datos personales.} El catálogo y la ficha pública solo
   exponen datos de la mascota y del refugio (nombre y localidad), no del
   adoptante.
+\item \textbf{Latencia remota.} La consulta del catálogo agrupa total y página
+  en una sola sentencia, desactiva \code{pool\_pre\_ping} y prepared
+  statements del pooler, y lee en \code{AUTOCOMMIT}; así se cumple el p95 con
+  unos 95 ms de ida y vuelta al pooler.
 \end{itemize}
 
 \subsection{Pruebas funcionales}
@@ -609,10 +651,10 @@ condiciones límite, está en \code{docs/contratos\_api.md}.
 python -m pytest -v
 \end{lstlisting}
 
-Resultado: \textbf{44/44 pruebas pasan} en aproximadamente 2 s
-(\code{evidencias/salida\_pruebas\_semana15.txt}). Incluye 5 pruebas nuevas de
-integración de la interfaz. Aparece un aviso de deprecación de Starlette sobre
-\code{httpx}; no afecta los resultados.
+Resultado: \textbf{53/53 pruebas pasan} en aproximadamente 7 s
+(\code{evidencias/salida\_pruebas\_supabase.txt}). Incluye 9 pruebas de
+autenticación y roles además de las 44 anteriores. Aparece un aviso de
+deprecación de Starlette sobre \code{httpx}; no afecta los resultados.
 
 {\footnotesize
 \begin{longtable}{@{}A{0.06\linewidth}L{0.12\linewidth}L{0.23\linewidth}L{0.29\linewidth}L{0.18\linewidth}@{}}
@@ -647,7 +689,7 @@ RF-34 & Entrada & especie = conejo &
 \end{longtable}
 }
 
-\textbf{Distribución de las 44 pruebas:}
+\textbf{Distribución de las 53 pruebas:}
 
 {\footnotesize
 \begin{tabularx}{\linewidth}{@{}V{1.4}V{1.1}V{0.5}@{}}
@@ -661,6 +703,7 @@ RF-34 & Entrada & especie = conejo &
 repositorio (RNF-08) & 9 \\
 \code{pruebas/test\_integracion\_ui.py} & Integración de \code{/ui/} con la API
 (semana 15) & 5 \\
+\code{pruebas/test\_autenticacion.py} & Login, roles, JWT y propietario & 9 \\
 \bottomrule
 \end{tabularx}
 }
@@ -696,13 +739,14 @@ y filtro inválido. El resultado final es \textbf{CUMPLE}.
 RF-05, RF-34 / \textbf{RNF-05} & Eficiencia de desempeño / comportamiento
 temporal & 1.000 fichas; 20 consultas consecutivas (cada una $\leq$ 1 s) y
 50 usuarios concurrentes $\times$ 20 consultas (p95 $\leq$ 1 s) &
-\textbf{Cumple}; secuencial 20/20, p95 7,52 ms; concurrente 1000/1000
-respuestas correctas, p95 532,11 ms &
-\code{rnf\_desempeno.txt}, \code{rnf\_escalabilidad.txt} \\
+\textbf{Cumple}; local: p95 3,78 ms y 413,45 ms; Supabase: p95 107,66 ms y
+731,45 ms; 20/20 y 1000/1000 respuestas correctas &
+\code{rnf\_desempeno.txt}, \code{rnf\_escalabilidad.txt},
+\code{rnf\_supabase.txt} \\
 RF-05, RF-34 / \textbf{RNF-08} & Mantenibilidad / capacidad para ser probado &
 Doble del repositorio, sin base real; cobertura $\geq$ 70\,\% en servicios &
 \textbf{Cumple}; 9/9 pruebas aisladas; \textbf{100\,\%} de cobertura (33
-sentencias), repetido con 44 pruebas &
+sentencias), repetido con 53 pruebas &
 \code{test\_servicios\_aislados.py}, \code{cobertura.txt} \\
 RF-05, RF-34 / \textbf{RNF-10} & Seguridad / integridad & Matriz de entradas
 inválidas; 0 filas persistidas & \textbf{Cumple}; 14/14 casos rechazados; 0
@@ -712,9 +756,10 @@ RF-05, RF-34 / \textbf{RNF-04} & Seguridad / confidencialidad & Revisar las
 claves del catálogo y de la ficha pública & \textbf{Cumple}; 0 campos
 personales & \code{test\_rf34\_api.py}, \code{demo\_api.txt} \\
 RF-34 / \textbf{RNF-07} & Flexibilidad / escalabilidad & 2.000 fichas y 5.000
-adoptantes simulados como consultas; p95 $\leq$ 1 s &
-\textbf{Cumple}; 5000/5000 respuestas correctas; p95 585,77 ms &
-\code{rnf\_escalabilidad.txt} \\
+consultas autenticadas; p95 $\leq$ 1 s &
+\textbf{Cumple}; 5000/5000 respuestas correctas; p95 local 465,19 ms y
+Supabase 494,45 ms &
+\code{rnf\_escalabilidad.txt}, \code{rnf\_supabase.txt} \\
 \end{longtable}
 }
 
@@ -722,25 +767,30 @@ adoptantes simulados como consultas; p95 $\leq$ 1 s &
 
 La meta de la plantilla incluye 500 fichas y 50 usuarios concurrentes. En esta
 entrega se usó un volumen mayor (1.000 fichas). En secuencial se conservó el
-criterio estricto: cada consulta $\leq$ 1 s en 20/20 mediciones (p95 7,52 ms).
-La concurrencia se verificó por separado con 50 usuarios $\times$ 20 consultas
-sobre 1.000 fichas; allí el criterio aplicable es p95 $\leq$ 1 s y se midió
-532,11 ms. No se rebajó el umbral.
+criterio estricto: cada consulta $\leq$ 1 s en 20/20 mediciones (p95 local
+3,78 ms; p95 en Supabase 107,66 ms). La concurrencia se verificó por separado
+con 50 usuarios $\times$ 20 consultas; allí el criterio aplicable es p95
+$\leq$ 1 s y se midió 413,45 ms en local y 731,45 ms contra Supabase. No se
+rebajó el umbral.
 
-El corte no modela la entidad adoptante. Para RNF-07, cada adoptante se
-representa con una consulta al catálogo (RF-34) contra la API real: 5.000
-consultas sobre 2.000 fichas con 50 usuarios concurrentes dieron p95 585,77 ms.
-No se simulan respuestas.
+El rol \code{adoptante} forma parte de la autenticación: cada adoptante se
+representa con una consulta autenticada al catálogo (RF-34) contra la API real.
+En RNF-07, 5.000 consultas sobre 2.000 fichas con 50 usuarios concurrentes
+dieron p95 465,19 ms en local y 494,45 ms en Supabase. No se simulan respuestas;
+la latencia remota incluye unos 95 ms de ida y vuelta al pooler y se compensó
+con una sola consulta SQL por página, sin \code{pool\_pre\_ping}, sin prepared
+statements y con lecturas en \code{AUTOCOMMIT}.
 
 \subsection{Cierre de la matriz en la semana 15}
 
 La matriz anterior es la definitiva del corte. No se agregaron RNF nuevos por
-construir la interfaz. RNF-08 se repitió porque se incorporaron archivos
-estáticos y una nueva ruta de pruebas; los servicios no cambiaron y el
-aislamiento con doble del repositorio se mantuvo en 100\,\%. RNF-05 y RNF-07
-quedan \textbf{cumplidos con evidencia reproducible}. Las prácticas de etiquetas,
-teclado y mensajes de la interfaz son mejoras de interacción, no un RNF de
-accesibilidad acordado.
+construir la interfaz, autenticar roles ni migrar a PostgreSQL. RNF-08 se repitió
+con 53 pruebas porque se incorporaron seguridad y una base alternativa; los
+servicios no cambiaron y el aislamiento con doble del repositorio se mantuvo en
+100\,\%. RNF-05 y RNF-07 quedan \textbf{cumplidos con evidencia reproducible}
+tanto en local como contra Supabase. Las prácticas de etiquetas, teclado y
+mensajes de la interfaz son mejoras de interacción, no un RNF de accesibilidad
+acordado.
 
 \subsection{Comandos de verificación}
 
@@ -754,6 +804,11 @@ python -m pruebas.rnf_desempeno
 
 # RNF-05 con 50 usuarios concurrentes y RNF-07 con 2.000 fichas y 5.000 consultas
 python -m pruebas.rnf_escalabilidad
+
+# Verificación sobre Supabase (requiere DATABASE_URL y AUTH_JWT_SECRET en .env.local)
+python -m persistencia.migrar_supabase
+python -m pruebas.verificar_supabase
+python -m pruebas.rnf_supabase
 \end{lstlisting}
 
 \clearpage
@@ -767,9 +822,10 @@ python -m pruebas.rnf_escalabilidad
 
 \begin{itemize}
 \item Python 3.12.10 (compatible con 3.10 o superior).
-\item SQLite 3.49.1 incluido en Python; sin servidor ni credenciales.
-\item Dependencias de \code{requirements.txt}: FastAPI, Uvicorn, pytest, httpx
-  y coverage.
+\item SQLite 3.49.1 incluido en Python como modo local sin servidor.
+\item PostgreSQL en Supabase con \code{DATABASE_URL} para el modo persistente.
+\item Dependencias de \code{requirements.txt}: FastAPI, Uvicorn, SQLAlchemy,
+  psycopg, PyJWT, pytest, httpx y coverage.
 \end{itemize}
 
 \subsection{Instalación y ejecución}
@@ -796,7 +852,12 @@ uvicorn api.main:app --reload --port 8000
 \begin{tabularx}{\linewidth}{@{}V{0.6}V{1.1}V{1.3}@{}}
 \toprule
 \thead{Variable} & \thead{Valor por defecto} & \thead{Uso} \\ \midrule
-\code{DB\_PATH} & \code{evidencias/api.db} & Ruta de la base SQLite. \\
+\code{DATABASE\_URL} & Sin valor & DSN de PostgreSQL/Supabase; si existe,
+se usa el esquema \code{aqsis}. Secreto: no versionar. \\
+\code{AUTH\_JWT\_SECRET} & Valor fijo en desarrollo local & Secreto HS256;
+obligatorio con \code{DATABASE\_URL}. Secreto: no versionar. \\
+\code{DB\_PATH} & \code{evidencias/api.db} & Ruta de la base SQLite cuando no
+hay \code{DATABASE\_URL}. \\
 \code{CORS\_ORIGINS} & \code{localhost:5173}, \code{127.0.0.1:5173} y
 \code{localhost:3000} & Orígenes permitidos para la interfaz. \\
 \bottomrule
@@ -807,16 +868,16 @@ uvicorn api.main:app --reload --port 8000
 
 \begin{lstlisting}
 proyecto_arq_sis_mascotas/
-|-- api/                  # rutas, contratos y dependencias
+|-- api/                  # rutas, login, contratos y dependencias
+|-- seguridad/            # PBKDF2, JWT, roles y propietario
 |-- servicios/            # RF-05 y RF-34
-|-- persistencia/         # esquema, seed, repositorio e inicializador
-|-- pruebas/              # 44 pruebas y scripts de evidencia
+|-- persistencia/         # SQLite y PostgreSQL/Supabase
+|-- pruebas/              # 53 pruebas y scripts de evidencia
 |-- frontend/             # interfaz minima servida en /ui/
 |-- docs/
-|   |-- contratos_api.md          # contratos completos
-|   |-- informe_semanas_13_14.md  # informe en Markdown
-|   `-- informe_semana15.md       # informe de integracion
-|-- evidencias/           # pruebas, cobertura, desempeno e interfaz
+|   |-- contratos_api.md          # contratos y autenticacion
+|   `-- informe_semana15.md       # informe de cierre
+|-- evidencias/           # pruebas, cobertura, RNF y Supabase
 |-- plantilla/            # documentos formales
 |-- main.py               # entrada de Vercel
 `-- README.md
@@ -832,8 +893,10 @@ proyecto_arq_sis_mascotas/
 (semana 13). \\
 \code{evidencias/salida\_pruebas\_semana14.txt} & 39/39 pruebas de la
 semana 14. \\
-\code{evidencias/salida\_pruebas\_semana15.txt} & 44/44 pruebas, incluidas 5
-de integración de interfaz (semana 15). \\
+\code{evidencias/salida\_pruebas\_semana15.txt} & 44/44 pruebas de la
+semana 15. \\
+\code{evidencias/salida\_pruebas\_supabase.txt} & 53/53 pruebas con
+autenticación y roles. \\
 \code{evidencias/integracion\_ui.txt} & Integración HTTP real de \code{/ui/}
 con la API; resultado CUMPLE. \\
 \code{evidencias/pantalla\_ui.txt} & Recorrido y mensajes en navegador real. \\
@@ -842,6 +905,9 @@ con la API; resultado CUMPLE. \\
 (RNF-05 secuencial). \\
 \code{evidencias/rnf\_escalabilidad.txt} & 50 usuarios concurrentes (RNF-05) y
 5.000 consultas sobre 2.000 fichas (RNF-07). \\
+\code{evidencias/supabase\_verificacion.txt} & Roles, RF, índices y
+\code{EXPLAIN} en el esquema \code{aqsis}. \\
+\code{evidencias/rnf\_supabase.txt} & RNF-05 y RNF-07 medidos contra Supabase. \\
 \code{evidencias/demo\_api.txt} & Peticiones y respuestas HTTP reales de ambos
 RF. \\
 \code{evidencias/prueba.db} & Base reproducible de la semana 13. \\
@@ -854,7 +920,7 @@ RF. \\
 % =====================================================================
 % 7. Semana 15
 % =====================================================================
-\section{Semana 15 --- Interfaz e integración}
+\section{Semana 15 --- Interfaz, roles e integración}
 
 \subsection{Resultado y flujo}
 
@@ -866,9 +932,9 @@ el mismo origen que la API, por lo que no se modificó CORS ni se agregó un
 framework de frontend.
 
 \begin{center}
-\code{Interfaz (/ui/)} $\rightarrow$ \code{API (/api/v1)} $\rightarrow$
+\code{Interfaz (/ui/)} $\rightarrow$ \code{API + JWT} $\rightarrow$
 \code{Servicio de aplicación} $\rightarrow$ \code{Repositorio} $\rightarrow$
-\code{SQLite}
+\code{SQLite / PostgreSQL (Supabase)}
 \end{center}
 
 {\footnotesize
@@ -891,6 +957,11 @@ al ejemplo de citas de la guía es directa: allí se consulta por \code{id} de
 cita; aquí RF-34 es un catálogo, por lo que la verificación tras recargar se
 hace volviendo a consultar y comprobando que el \code{id} creado aparece en la
 respuesta del servidor.
+
+La autenticación por rol y la migración a Supabase se sumaron sin modificar
+estos contratos: la interfaz inicia sesión, guarda el token en memoria y lo envía
+en cada petición. El campo \code{refugio\_id} se conserva y se valida contra el
+token.
 
 \subsection{Organización por pestañas y relleno de ejemplo}
 
@@ -936,6 +1007,9 @@ el intento. No se declara un RNF de accesibilidad nuevo.
 
 \subsection{Conexión con los contratos vigentes}
 
+Todas las solicitudes de la tabla incluyen \code{Authorization: Bearer TOKEN},
+obtenido en \code{POST /auth/token}; el login es la única excepción.
+
 {\footnotesize
 \begin{longtable}{@{}A{0.10\linewidth}A{0.42\linewidth}A{0.42\linewidth}@{}}
 \toprule
@@ -966,10 +1040,11 @@ RF-34 consultar & \code{GET /api/v1/mascotas} con \code{especie}, \code{tamano},
 \end{longtable}
 }
 
-No se cambió ningún contrato. El \code{id} lo genera el backend y el estado
-inicial lo decide el repositorio según RN-22 y RN-03. La interfaz solo valida la
-presencia de campos obligatorios y el formato visible de la fecha; las reglas de
-negocio siguen en el backend.
+No se cambió ningún contrato de los RF. El \code{id} lo genera el backend y el
+estado inicial lo decide el repositorio según RN-22 y RN-03. La interfaz solo
+valida la presencia de campos obligatorios y el formato visible de la fecha; las
+reglas de negocio siguen en el backend. El token sustituye la confianza ciega en
+el \code{refugio\_id}, sin borrar esa clave del JSON.
 
 \subsection{Escenarios de integración ejecutados}
 
@@ -1029,10 +1104,12 @@ conteo de filas antes y después.
 de comunicación en navegador real. \\
 \code{evidencias/integracion\_ui.txt} & Reproducción automática con HTTP real y
 SQLite; resultado \textbf{CUMPLE}. \\
-\code{evidencias/salida\_pruebas\_semana15.txt} & 44/44 pruebas, incluidas 5 de
-integración de interfaz. \\
+\code{evidencias/salida\_pruebas\_supabase.txt} & 53/53 pruebas, incluidas 9 de
+autenticación y roles. \\
 \code{evidencias/cobertura.txt} & Repetición de RNF-08: 100\,\% en servicios. \\
 \code{evidencias/rnf\_desempeno.txt} & Repetición de RNF-05: 20/20 consultas. \\
+\code{evidencias/supabase\_verificacion.txt} & Roles, RF e índices en Supabase. \\
+\code{evidencias/rnf\_supabase.txt} & RNF-05 y RNF-07 remotos. \\
 \bottomrule
 \end{tabularx}
 }
@@ -1041,23 +1118,27 @@ integración de interfaz. \\
 python -m persistencia.inicializar_db
 uvicorn api.main:app --reload --port 8000
 # Interfaz: http://127.0.0.1:8000/ui/
-python -m pytest -v
+python -m pytest pruebas -q
 python -m pruebas.demo_integracion
 python -m pruebas.rnf_desempeno
 python -m pruebas.rnf_escalabilidad
+
+# Opcional: con DATABASE_URL y AUTH_JWT_SECRET en .env.local
+python -m persistencia.migrar_supabase
+python -m pruebas.verificar_supabase
+python -m pruebas.rnf_supabase
 \end{lstlisting}
 
 \subsection{Limitaciones}
 
 \begin{itemize}
-\item El actor se identifica con \code{refugio\_id} explícito; no hay
-  autenticación ni roles.
 \item Las fotos se registran por nombre de archivo; no se almacena el binario.
 \item La medición secuencial y la medición concurrente de RNF-05 son alcances
   distintos; no se comparan entre sí.
-\item El corte no modela la entidad adoptante: cada adoptante se representa con
-  una consulta al catálogo (RF-34).
-\item PostgreSQL y sus índices no se han verificado en este corte.
+\item Cada adoptante se representa con una consulta autenticada al catálogo;
+  no se modela un flujo de adopción.
+\item El token vive en memoria: al recargar hay que iniciar sesión de nuevo.
+\item La autenticación es básica (PBKDF2 y JWT propio), no Supabase Auth.
 \item La pantalla es una demostración mínima, no un portal completo.
 \end{itemize}
 
@@ -1096,8 +1177,13 @@ La matriz final distingue cumplidos, parciales y no verificados & \textbf{Sí} &
 Sección 5: todos los RNF medidos; no quedan no verificados. \\
 Los RNF previstos tienen medidas y evidencias & \textbf{Sí} &
 RNF-04, 05, 07, 08 y 10. \\
-Se distinguen los incumplimientos y pendientes de la semana 3 & \textbf{Sí} &
-Sección de pendientes. \\
+La autenticación por rol no altera rutas ni claves JSON & \textbf{Sí} &
+\code{/auth/token}, \code{test\_autenticacion.py} y
+\code{supabase\_verificacion.txt}. \\
+PostgreSQL queda verificado con índices y triggers & \textbf{Sí} &
+\code{schema\_postgres.sql} y \code{supabase\_verificacion.txt}. \\
+Los incumplimientos y pendientes quedan separados & \textbf{Sí} &
+Sección 9. \\
 El README permite ejecutar y repetir las pruebas & \textbf{Sí} &
 Secciones 6 y 7 y \code{README.md}. \\
 \bottomrule
@@ -1107,32 +1193,31 @@ Secciones 6 y 7 y \code{README.md}. \\
 % =====================================================================
 % 9. Pendientes
 % =====================================================================
-\section{Pendientes y relevo a la semana 3}
+\section{Estado, cierre y pendientes}
 
 \textbf{Implementado y verificado}
 
 \begin{itemize}
-\item Persistencia completa de RF-05 y RF-34 con integridad referencial.
-\item Servicios de aplicación y API REST con cuatro endpoints.
-\item Contratos documentados y OpenAPI generado por FastAPI.
-\item 44 pruebas: funcionales, de integridad, de servicios aislados y de
-  integración de la interfaz.
-\item RNF-04, RNF-05 (secuencial y con 50 usuarios), RNF-07, RNF-08 y RNF-10
-  con evidencia reproducible.
+\item Persistencia completa de RF-05 y RF-34 en SQLite y PostgreSQL/Supabase.
+\item Servicios de aplicación y API REST con cinco endpoints: login y cuatro
+  de los RF.
+\item Autenticación por rol con JWT, PBKDF2 y validación de propietario.
+\item Contratos documentados y OpenAPI generado por FastAPI, sin cambios en
+  rutas ni claves JSON.
+\item 53 pruebas: funcionales, de integridad, de servicios aislados, de
+  integración de la interfaz y de autenticación.
+\item RNF-04, RNF-05, RNF-07, RNF-08 y RNF-10 medidos en local y RNF-05/RNF-07
+  también contra Supabase.
 \item Demostración HTTP real de ambos RF y recorrido desde la interfaz
   \code{/ui/} en navegador real.
 \end{itemize}
 
-\textbf{Pendiente para la semana 3}
+\textbf{Pendiente fuera del corte}
 
 \begin{itemize}
-\item Autenticación, roles y reemplazo de \code{refugio\_id} explícito por el
-  usuario autenticado.
+\item Almacenamiento binario de fotos (hoy se guarda el nombre de archivo).
+\item Rechazo automático de solicitudes pendientes al dar de baja (RN-15).
 \item Ampliación de la interfaz mínima sin convertirla en un portal.
-\item Migración y verificación en PostgreSQL (ADR-03/ADR-10).
-\item Almacenamiento binario de fotos (hoy se guarda la ruta).
-\item Rechazo automático de solicitudes pendientes al dar de baja (RN-15),
-  fuera de este corte.
 \end{itemize}
 
 % =====================================================================
@@ -1151,28 +1236,35 @@ RF-34 & \code{servicios/servicio\_catalogo.py}, \code{api/main.py} (GET),
 \code{frontend/app.js} y \code{pruebas/test\_rf34\_api.py}. \\
 Contratos & \code{docs/contratos\_api.md}, \code{/docs} y
 \code{/openapi.json}. \\
+Autenticación & \code{seguridad/autenticacion.py}, \code{api/main.py}
+(\code{/auth/token}) y \code{pruebas/test\_autenticacion.py}. \\
+PostgreSQL & \code{persistencia/schema\_postgres.sql},
+\code{repositorio\_postgres.py}, \code{migrar\_supabase.py} y
+\code{evidencias/supabase\_verificacion.txt}. \\
 Interfaz \code{/ui/} & \code{frontend/index.html}, \code{frontend/styles.css},
 \code{frontend/app.js} y \code{evidencias/pantalla\_ui.txt}. \\
 Integración UI & \code{pruebas/test\_integracion\_ui.py},
 \code{pruebas/demo\_integracion.py} y \code{evidencias/integracion\_ui.txt}. \\
 RNF-04 & \code{test\_catalogo\_sin\_datos\_personales\_rnf04}. \\
 RNF-05 & \code{pruebas/rnf\_desempeno.py},
-\code{pruebas/rnf\_escalabilidad.py} y sus dos evidencias; cumplido. \\
+\code{pruebas/rnf\_escalabilidad.py}, \code{pruebas/rnf\_supabase.py} y sus
+tres evidencias; cumplido. \\
 RNF-08 & \code{pruebas/test\_servicios\_aislados.py} y
 \code{evidencias/cobertura.txt}. \\
 RNF-10 & \code{pruebas/test\_rnf10\_integridad.py} y
 \code{evidencias/salida\_pruebas\_semana14.txt}. \\
-RNF-07 & \code{pruebas/rnf\_escalabilidad.py} y
-\code{evidencias/rnf\_escalabilidad.txt}; cumplido. \\
+RNF-07 & \code{pruebas/rnf\_escalabilidad.py},
+\code{pruebas/rnf\_supabase.py} y sus evidencias; cumplido. \\
 Persistencia & \code{persistencia/schema.sql},
-\code{persistencia/repositorio.py} y \code{evidencias/salida\_pruebas.txt}. \\
+\code{persistencia/schema\_postgres.sql}, ambos repositorios y sus evidencias. \\
 Informe en Markdown & \code{docs/informe\_semanas\_13\_14.md} y
 \code{docs/informe\_semana15.md}. \\
 Documento semana 13 & \code{plantilla/plantilla\_13\_1.tex} y
 \code{plantilla/plantilla\_13\_1.pdf}. \\
 Documento semanas 13--15 & \code{plantilla/plantilla\_13\_14\_15.tex}. \\
-Despliegue de prueba & \code{main.py}, \code{.vercelignore} y
-\url{https://aqsis-corte-vertical.vercel.app}; base efímera en \code{/tmp}. \\
+Despliegue & \code{main.py}, \code{.vercelignore},
+\url{https://aqsis-corte-vertical.vercel.app/ui/} y Supabase como base
+persistente. \\
 \bottomrule
 \end{tabularx}
 }
@@ -1184,9 +1276,10 @@ persistencia en servicios y una API con contratos estables; la semana 15 agregó
 la interfaz mínima que consume esa API real y cerró la matriz RF--RNF. Las tres
 semanas mantienen el mismo alcance: publicar fichas (RF-05) y consultarlas
 (RF-34), sin cambiar contratos ni reglas de negocio. La calidad se concentró en
-integridad, comportamiento temporal, capacidad de prueba y confidencialidad;
-RNF-05 y RNF-07 se reportan como cumplidos con evidencia reproducible. Lo que
-falta ---autenticación, roles y PostgreSQL--- está identificado y se retoma en
-la semana 3.
+integridad, comportamiento temporal, capacidad de prueba, confidencialidad y
+control de acceso. RNF-05 y RNF-07 se reportan como cumplidos en local y contra
+Supabase con evidencia reproducible. La autenticación por rol y la migración a
+PostgreSQL quedaron implementadas sin cambiar contratos; como trabajo futuro
+quedan el almacenamiento binario de fotos y RN-15.
 
 \end{document}
