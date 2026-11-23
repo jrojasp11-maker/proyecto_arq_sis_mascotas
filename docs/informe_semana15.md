@@ -1,4 +1,4 @@
-# Informe de la semana 15 — Interfaz e integración del corte vertical
+# Informe de la semana 15 — Interfaz, autenticación por rol e integración con Supabase
 
 **Proyecto:** Sistema de Apoyo a la Decisión para la Adopción Responsable de Mascotas mediante Inteligencia Artificial.
 
@@ -14,7 +14,7 @@
 
 ## 1. Resultado de la semana
 
-Los dos requisitos funcionales priorizados se ejecutan desde una interfaz que consume la **API real**, sin simular respuestas. La pantalla no guarda el resultado en el navegador: cada dato visible se obtiene con una petición HTTP a `/api/v1`.
+Los dos requisitos funcionales priorizados se ejecutan desde una interfaz que consume la **API real**, sin simular respuestas. La pantalla no guarda el resultado en el navegador: cada dato visible se obtiene con una petición HTTP a `/api/v1`, ahora autenticada con un JWT por rol. El corte también quedó migrado a **PostgreSQL en Supabase** (esquema `aqsis`), conservando SQLite como modo local y de pruebas.
 
 | RF | Prioridad | Acción desde la interfaz | Resultado observable |
 |---|---|---|---|
@@ -26,10 +26,31 @@ La interfaz se sirve desde la propia FastAPI en `/ui/`, en el **mismo origen** q
 La pantalla se organiza en tres pestañas —**Crear ficha (RF-05)**, **Editar y baja (RF-05)** y **Consultar catálogo (RF-34)**— con navegación por teclado. El botón **Rellenar datos de ejemplo** carga automáticamente una ficha válida, los datos de edición y los filtros del catálogo para acelerar la demostración. El relleno no consulta ni simula la API: solo prepara los campos; el `id`, el estado y las filas visibles siguen viniendo del servidor.
 
 ```text
-Interfaz (/ui/)  →  API (/api/v1)  →  Servicio de aplicación  →  Repositorio  →  SQLite
+Interfaz (/ui/)  →  API (/api/v1) + JWT  →  Servicio de aplicación  →  Repositorio  →  SQLite / PostgreSQL (Supabase)
 ```
 
 Los identificadores, prioridades, reglas RN-22/RN-03/RN-15, formatos y contratos de las semanas 13 y 14 se conservan sin cambios.
+
+### Autenticación por rol y Supabase
+
+Se agregó `POST /api/v1/auth/token`, el único endpoint nuevo. Devuelve
+`access_token`, `token_type`, `rol`, `refugio_id` y `expires_in`. Los roles son
+`refugio`, `adoptante` y `admin`; las contraseñas se guardan con
+PBKDF2-HMAC-SHA256 y el token se firma con JWT HS256 usando `AUTH_JWT_SECRET`.
+El token se conserva solo en memoria en el navegador y se envía como
+`Authorization: Bearer <token>` en cada petición.
+
+- `GET /api/v1/mascotas`: cualquier rol autenticado.
+- `POST`, `PUT` y `DELETE` de fichas: solo `refugio` y `admin`; `refugio` únicamente
+  sobre su `refugio_id`, `admin` sobre cualquier refugio.
+- Las rutas, los nombres de las claves JSON y los códigos `ERR-004`, `ERR-008`,
+  `ERR-009` y `ERR-011` no cambiaron. Se suman `ERR-401` y `ERR-403`.
+
+La base persistente es PostgreSQL en Supabase, en el esquema independiente
+`aqsis` con tablas `refugio`, `mascota`, `fotografia` y `usuario`, índices
+`idx_mascota_catalogo` e `idx_mascota_filtros` y los tres triggers de negocio.
+`evidencias/supabase_verificacion.txt` registra la verificación HTTP de roles,
+RF-05, RF-34 y el `EXPLAIN` que confirma el uso del índice del catálogo.
 
 ---
 
@@ -66,7 +87,7 @@ Un error `5xx` se trata como fallo de comunicación, no como resultado de negoci
 | RF-05 baja | `DELETE /api/v1/mascotas/{id}?refugio_id={id}`, sin cuerpo | `204`: baja confirmada; `403 ERR-003`, `404 ERR-011` |
 | RF-34 consultar | `GET /api/v1/mascotas?especie=...&tamano=...&edad_min=...&edad_max=...&pagina=...&por_pagina=...` | `200`: tabla desde `mascotas` y resumen; `400 ERR-004`: filtro inválido; `total = 0`: ausencia, no error |
 
-No se cambió ningún contrato. El `id` lo genera el backend y el estado inicial lo decide el repositorio según RN-22 y RN-03. La interfaz solo valida la presencia de campos obligatorios y el formato visible de la fecha; las reglas de negocio siguen en el backend.
+No se cambió ningún contrato de los RF. El `id` lo genera el backend y el estado inicial lo decide el repositorio según RN-22 y RN-03. La interfaz solo valida la presencia de campos obligatorios y el formato visible de la fecha; las reglas de negocio siguen en el backend. Todas las solicitudes incluyen la cabecera `Authorization` obtenida en `/api/v1/auth/token`; el campo `refugio_id` se mantiene y se contrasta con el token.
 
 La adaptación frente al ejemplo de citas de la guía es directa: allí se consulta por `id` de cita; aquí **RF-34 es un catálogo**, así que la verificación tras recargar se hace volviendo a consultar con filtros y comprobando que el `id` creado aparece en la respuesta del servidor.
 
@@ -100,10 +121,12 @@ La persistencia se comprobó además desde una conexión SQLite nueva y tras rei
 |---|---|
 | `evidencias/pantalla_ui.txt` | Mensajes visibles, filas de la tabla, rechazos y fallo de comunicación en navegador real |
 | `evidencias/integracion_ui.txt` | Reproducción automática de los escenarios anteriores con HTTP real y SQLite |
-| `evidencias/salida_pruebas_semana15.txt` | 44/44 pruebas, incluidas 5 nuevas de integración de interfaz |
+| `evidencias/salida_pruebas_supabase.txt` | 53/53 pruebas, incluidas 9 de autenticación por rol |
 | `evidencias/cobertura.txt` | Repetición de RNF-08: 100 % en servicios |
 | `evidencias/rnf_desempeno.txt` | Repetición de RNF-05: 20/20 consultas dentro del umbral |
 | `evidencias/rnf_escalabilidad.txt` | RNF-05 con 50 usuarios concurrentes y RNF-07 con 2.000 fichas / 5.000 consultas |
+| `evidencias/supabase_verificacion.txt` | Roles, RF-05, RF-34, persistencia en `aqsis` y `EXPLAIN` del índice |
+| `evidencias/rnf_supabase.txt` | RNF-05 y RNF-07 medidos por HTTP real contra Supabase |
 
 ---
 
@@ -114,16 +137,17 @@ Se conservan los identificadores y escenarios de las semanas anteriores. No se i
 | RF / RNF | Característica ISO/IEC 25010:2023 y escenario | Meta | Resultado medido | Estado | Evidencia |
 |---|---|---|---|---|---|
 | RF-05, RF-34 / **RNF-04** | Seguridad / confidencialidad. El catálogo y la ficha pública no exponen datos personales del adoptante | 0 campos personales | 0 campos en las claves revisadas | **Cumple** | `test_rf34_api.py`, `demo_api.txt` |
-| RF-34 / **RNF-05** | Eficiencia de desempeño / comportamiento temporal. 1.000 fichas; 20 consultas consecutivas y 50 usuarios concurrentes × 20 consultas | Secuencial: cada consulta ≤ 1 s. Concurrente: p95 ≤ 1 s | Secuencial: 20/20; p95 7,52 ms. Concurrente: 1000/1000 respuestas correctas; p95 532,11 ms | **Cumple** | `pruebas/rnf_desempeno.py`, `pruebas/rnf_escalabilidad.py`, `evidencias/rnf_desempeno.txt`, `evidencias/rnf_escalabilidad.txt` |
+| RF-34 / **RNF-05** | Eficiencia de desempeño / comportamiento temporal. 1.000 fichas; 20 consultas consecutivas y 50 usuarios concurrentes × 20 consultas | Secuencial: cada consulta ≤ 1 s. Concurrente: p95 ≤ 1 s | Local: 20/20, p95 3,78 ms; 1000/1000, p95 413,45 ms. Supabase: 20/20, p95 107,66 ms; 1000/1000, p95 731,45 ms | **Cumple** | `pruebas/rnf_desempeno.py`, `pruebas/rnf_escalabilidad.py`, `pruebas/rnf_supabase.py` y sus evidencias |
 | RF-05, RF-34 / **RNF-08** | Mantenibilidad / capacidad para ser probado. Servicios con repositorio simulado, sin base real | Pruebas aisladas y cobertura ≥ 70 % | 9/9 pruebas aisladas; 100 % de cobertura (33 sentencias) | **Cumple** | `pruebas/test_servicios_aislados.py`, `evidencias/cobertura.txt` |
 | RF-05, RF-34 / **RNF-10** | Seguridad / integridad. Matriz de entradas inválidas | 0 filas persistidas ante entrada inválida | 14/14 casos rechazados; 0 filas nuevas o modificadas | **Cumple** | `pruebas/test_rnf10_integridad.py`, `salida_pruebas_semana14.txt` |
-| RF-34 / **RNF-07** | Flexibilidad / escalabilidad. 2.000 fichas y 5.000 adoptantes simulados como consultas, p95 ≤ 1 s | p95 ≤ 1 s | 5000/5000 respuestas correctas; p95 585,77 ms | **Cumple** | `pruebas/rnf_escalabilidad.py`, `evidencias/rnf_escalabilidad.txt` |
+| RF-34 / **RNF-07** | Flexibilidad / escalabilidad. 2.000 fichas y 5.000 adoptantes simulados como consultas, p95 ≤ 1 s | p95 ≤ 1 s | Local: 5000/5000, p95 465,19 ms. Supabase: 5000/5000, p95 494,45 ms | **Cumple** | `pruebas/rnf_escalabilidad.py`, `pruebas/rnf_supabase.py`, `evidencias/rnf_escalabilidad.txt`, `evidencias/rnf_supabase.txt` |
 
 ### Lectura honesta de los resultados
 
-- RNF-05 se midió desde el cliente HTTP sobre la respuesta completa, no hasta pintar en pantalla. En secuencial se conservó el criterio estricto: cada consulta ≤ 1 s (20/20). La concurrencia se verificó por separado con 50 usuarios × 20 consultas sobre 1.000 fichas; allí el criterio aplicado es p95 ≤ 1 s y se midió 532,11 ms. No se rebajó el umbral.
-- RNF-08 se repitió porque se agregó código de interfaz y una ruta de archivos estáticos; los servicios no cambiaron y el aislamiento con doble del repositorio sigue en 100 %.
-- RNF-07 quedó **verificado**: 5.000 consultas sobre 2.000 fichas con 50 usuarios concurrentes dieron p95 585,77 ms. El corte no modela la entidad adoptante, por lo que cada adoptante se representa con una consulta al catálogo (RF-34) contra la API real.
+- RNF-05 se midió desde el cliente HTTP sobre la respuesta completa, no hasta pintar en pantalla. En secuencial se conservó el criterio estricto: cada consulta ≤ 1 s (20/20). La concurrencia se verificó por separado con 50 usuarios × 20 consultas sobre 1.000 fichas; allí el criterio aplicado es p95 ≤ 1 s. El resultado local fue 413,45 ms y el de Supabase 731,45 ms. No se rebajó el umbral.
+- RNF-08 se repitió tras agregar autenticación y una ruta de base alternativa; los servicios no cambiaron y el aislamiento con doble del repositorio sigue en 100 %.
+- RNF-07 quedó **verificado**: 5.000 consultas autenticadas sobre 2.000 fichas con 50 usuarios concurrentes dieron p95 465,19 ms en local y 494,45 ms en Supabase. El rol adoptante se modela como una consulta al catálogo (RF-34) contra la API real.
+- Para cumplir el umbral con latencia remota, el repositorio PostgreSQL agrupa el total y la página en una sola consulta, evita el `pool_pre_ping` y los prepared statements del pooler, y usa lecturas en `AUTOCOMMIT`.
 - Las prácticas de etiquetas, teclado y mensajes se aplicaron, pero no sustituyen un RNF de interacción acordado.
 
 ---
@@ -149,6 +173,14 @@ python -m pruebas.rnf_desempeno
 python -m pruebas.rnf_escalabilidad
 ```
 
+Con `.env.local` que contenga `DATABASE_URL` y `AUTH_JWT_SECRET`:
+
+```powershell
+python -m persistencia.migrar_supabase
+python -m pruebas.verificar_supabase
+python -m pruebas.rnf_supabase
+```
+
 `demo_integracion` reinicia su propia base en `evidencias/integracion_ui.db` y genera `evidencias/integracion_ui.txt`; no altera la base de demostración manual.
 
 ---
@@ -163,7 +195,9 @@ python -m pruebas.rnf_escalabilidad
 | Se prueban éxito, rechazo o ausencia pertinentes de ambos RF | Sí | Sección 4, 13 escenarios |
 | Se demuestra persistencia y se evita confirmar resultados simulados | Sí | Recarga, conexión nueva y reinicio del backend |
 | Se manejan errores de entrada y comunicación de forma comprensible | Sí | Mensajes con códigos; fallback `5xx` y `fetch` |
-| Las reglas quedan en negocio y el acceso a datos en persistencia | Sí | `servicios/` y `persistencia/repositorio.py` |
+| Las reglas quedan en negocio y el acceso a datos en persistencia | Sí | `servicios/` y `persistencia/` |
+| La autenticación por rol no altera rutas ni claves documentadas | Sí | `/auth/token`, `test_autenticacion.py` y `supabase_verificacion.txt` |
+| PostgreSQL queda verificado con índices y triggers | Sí | `schema_postgres.sql` y `supabase_verificacion.txt` |
 | La matriz conserva trazabilidad RF–RNF–prueba–evidencia | Sí | Sección 5 |
 | Los resultados de calidad se comparan con las metas acordadas | Sí | Metas y medidas en la matriz |
 | Se identifican incumplimientos, no verificados y limitaciones | Sí | Todos los RNF medidos; limitaciones de alcance en la sección 8 |
@@ -171,16 +205,20 @@ python -m pruebas.rnf_escalabilidad
 
 ---
 
-## 8. Limitaciones y relevo
+## 8. Limitaciones y cierre
 
 **Limitaciones actuales**
 
-- El actor se identifica con `refugio_id` explícito; no hay autenticación ni roles.
 - Las fotos se registran por nombre de archivo; no se almacena el binario.
 - La medición secuencial de RNF-05 y la medición concurrente son alcances distintos; no se comparan entre sí.
-- El corte no modela la entidad adoptante: en RNF-07 cada adoptante se representa con una consulta al catálogo.
-- PostgreSQL y sus índices no se han verificado en este corte.
+- En RNF-07 cada adoptante se representa con una consulta autenticada al catálogo; no se modela un flujo de adopción.
+- El token vive en memoria: al recargar la página hay que iniciar sesión de nuevo.
+- El hashing PBKDF2 y el JWT son la autenticación básica del corte; no se usa Supabase Auth.
 
-**Pendiente para la semana 3 del prototipo**
+**Cierre de la semana 3 del prototipo**
 
-Autenticación, roles, migración a PostgreSQL y almacenamiento de imágenes. La concurrencia de RNF-05 y la prueba de RNF-07 ya quedaron cerradas en esta entrega. La interfaz consume los contratos vigentes, por lo que esos cambios no deberían alterar las rutas ni las claves JSON documentadas.
+La autenticación por roles y la migración a PostgreSQL ya quedaron implementadas
+y verificadas sin cambiar rutas ni claves JSON. La concurrencia de RNF-05 y la
+prueba de RNF-07 están cerradas tanto en local como contra Supabase. Queda como
+trabajo futuro el almacenamiento binario de imágenes y el rechazo automático de
+solicitudes pendientes al dar de baja (RN-15), fuera del alcance del corte.
