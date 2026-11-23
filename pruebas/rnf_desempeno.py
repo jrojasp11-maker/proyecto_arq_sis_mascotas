@@ -28,7 +28,7 @@ import fastapi
 import httpx
 import uvicorn
 
-from pruebas.servidor import servidor_api
+from pruebas.servidor import servidor_api, token_de_cliente
 
 RAIZ = Path(__file__).resolve().parent.parent
 EVIDENCIAS = RAIZ / "evidencias"
@@ -101,6 +101,9 @@ def main() -> int:
 
     with servidor_api(RUTA_DB) as url_base:
         with httpx.Client(base_url=url_base, timeout=10) as cliente:
+            cliente.headers.update(
+                {"Authorization": f"Bearer {token_de_cliente(cliente)}"}
+            )
             cliente.get("/api/v1/mascotas", params={"pagina": 1, "por_pagina": 20})
 
             for numero in range(1, CONSULTAS + 1):
@@ -143,7 +146,8 @@ def main() -> int:
         f"Consultas consecutivas: {CONSULTAS}",
         f"Umbral por consulta: <= {UMBRAL_MS:.0f} ms",
         "Métrica: tiempo completo de la respuesta HTTP medida por el cliente.",
-        "Alcance: verificación secuencial; la concurrencia de 50 usuarios queda para la semana 3.",
+        "Alcance: verificación secuencial; la concurrencia de 50 usuarios se mide "
+        "en pruebas/rnf_escalabilidad.py (semana 15).",
         "-" * 78,
         f"{'#':>3}  {'HTTP':>4}  {'ms':>9}  {'total':>6}",
         "-" * 78,

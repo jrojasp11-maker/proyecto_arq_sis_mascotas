@@ -18,7 +18,7 @@ from pathlib import Path
 import httpx
 
 from persistencia.inicializar_db import inicializar
-from pruebas.servidor import servidor_api
+from pruebas.servidor import servidor_api, token_de_cliente
 
 RAIZ = Path(__file__).resolve().parent.parent
 EVIDENCIAS = RAIZ / "evidencias"
@@ -76,6 +76,9 @@ def main() -> int:
 
     with servidor_api(RUTA_DB) as url:
         with httpx.Client(base_url=url, timeout=10) as cliente:
+            cliente.headers.update(
+                {"Authorization": f"Bearer {token_de_cliente(cliente, 'admin')}"}
+            )
             pagina = cliente.get("/ui/")
             js = cliente.get("/ui/app.js")
             css = cliente.get("/ui/styles.css")
@@ -99,12 +102,20 @@ def main() -> int:
                 and "function rellenarDemo" in js.text
                 and "function activarPestana" in js.text
             )
+            login = (
+                'id="btn-login"' in pagina.text
+                and 'id="login-usuario"' in pagina.text
+                and "function iniciarSesion" in js.text
+                and 'cabeceras.Authorization = "Bearer " + tokenActual' in js.text
+            )
             chequear(pestanas, "las pestañas de RF-05 y RF-34 no estan en la pagina")
             chequear(relleno, "el relleno automatico de ejemplo no esta disponible")
+            chequear(login, "el inicio de sesion o el envio del token no estan en la interfaz")
             lineas.append(
                 "UI | pestanas: crear / editar / catalogo "
                 f"({'presentes' if pestanas else 'AUSENTES'}); "
-                f"relleno automatico: {'presente' if relleno else 'AUSENTE'}"
+                f"relleno automatico: {'presente' if relleno else 'AUSENTE'}; "
+                f"login y token: {'presentes' if login else 'AUSENTES'}"
             )
             lineas.append("")
 
@@ -250,6 +261,9 @@ def main() -> int:
     if nuevo_id is not None:
         with servidor_api(RUTA_DB) as url_reinicio:
             with httpx.Client(base_url=url_reinicio, timeout=10) as cliente:
+                cliente.headers.update(
+                    {"Authorization": f"Bearer {token_de_cliente(cliente, 'admin')}"}
+                )
                 recargado = cliente.get("/api/v1/mascotas")
                 ids_reinicio = [m["id"] for m in recargado.json()["mascotas"]]
                 lineas.append(

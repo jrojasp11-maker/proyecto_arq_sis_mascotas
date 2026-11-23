@@ -9,6 +9,12 @@ INSERT INTO refugio (id, nombre, localidad, estado_verificacion) VALUES
     (1, 'Refugio Patitas',      'ENGATIVA', 'verificado'),
     (2, 'Fundación Colitas',    'SUBA',     'pendiente');
 
+-- Contrasena demo de los tres usuarios: Aqsis2026!
+INSERT INTO usuario (id, nombre_usuario, contrasena_hash, rol, refugio_id) VALUES
+    (1, 'refugio',   'pbkdf2_sha256$200000$a1b2c3d4e5f60718293a4b5c6d7e8f90$89384af83a4e0fda79ab69f66e99c59f7dd14ca3abc731b2f79c71e06fe9dd99', 'refugio', 1),
+    (2, 'adoptante', 'pbkdf2_sha256$200000$a1b2c3d4e5f60718293a4b5c6d7e8f90$89384af83a4e0fda79ab69f66e99c59f7dd14ca3abc731b2f79c71e06fe9dd99', 'adoptante', NULL),
+    (3, 'admin',     'pbkdf2_sha256$200000$a1b2c3d4e5f60718293a4b5c6d7e8f90$89384af83a4e0fda79ab69f66e99c59f7dd14ca3abc731b2f79c71e06fe9dd99', 'admin', NULL);
+
 INSERT INTO mascota
     (id, refugio_id, nombre, raza, especie, edad_meses, tamano, nivel_energia,
      experiencia_requerida, apta_con_menores, apta_con_mascotas,

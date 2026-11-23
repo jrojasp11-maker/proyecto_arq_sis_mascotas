@@ -14,6 +14,13 @@ class FotografiaRespuesta(BaseModel):
     orden: int
 
 
+class Login(BaseModel):
+    """Cuerpo de POST /api/v1/auth/token (endpoint nuevo de autenticación)."""
+
+    usuario: str = Field(min_length=3, max_length=80)
+    contrasena: str = Field(min_length=8, max_length=200)
+
+
 class MascotaRespuesta(BaseModel):
     """Ficha completa devuelta por POST y PUT (RF-05)."""
 
@@ -40,8 +47,8 @@ class MascotaRespuesta(BaseModel):
 
 
 class MascotaCrear(BaseModel):
-    """Cuerpo de POST /mascotas. ``refugio_id`` representa al actor mientras
-    la autenticación queda para la semana 3."""
+    """Cuerpo de POST /mascotas. ``refugio_id`` se conserva por compatibilidad;
+    la API comprueba que coincida con el refugio del token."""
 
     refugio_id: int = Field(gt=0)
     nombre: str = Field(min_length=1, max_length=60)

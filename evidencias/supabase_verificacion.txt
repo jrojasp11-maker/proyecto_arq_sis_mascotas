@@ -1,0 +1,32 @@
+VERIFICACION DE POSTGRESQL/SUPABASE - CORTE VERTICAL
+==============================================================================
+Fecha de ejecucion: 2026-11-21T22:33:50
+Base: PostgreSQL en Supabase | Esquema: aqsis | Motor: SQLAlchemy 2.x
+Cliente: httpx real | Servidor: Uvicorn temporal
+==============================================================================
+
+SQL directo | current_schema=public; mascotas=6
+AUTH | POST sin token -> HTTP 401; codigo ERR-401
+AUTH | rol adoptante, GET catalogo -> HTTP 200; total 3
+AUTH | rol adoptante, POST -> HTTP 403; codigo ERR-403
+RF-05 | POST con rol refugio -> HTTP 201; estado disponible
+RF-05 | refugio 1 intenta publicar por refugio 2 -> HTTP 403; codigo ERR-003
+RF-05 | PUT /mascotas/7 -> HTTP 200; nombre PersistenciaSupabaseEditada
+RF-34 | GET catalogo tras crear -> HTTP 200; total 4; id 7 presente: True
+AUTH | admin publica por refugio 2 -> HTTP 409; codigo ERR-009 (RN-03)
+RF-05 | admin da de baja la ficha 7 -> HTTP 204
+RF-34 | catalogo tras baja: id 7 ausente: True
+SQL directo | ficha 7 estado final=baja
+
+INDICES | EXPLAIN del catálogo (enable_seqscan=off para forzar la comparación):
+Limit  (cost=0.29..5.84 rows=1 width=72)
+  ->  Nested Loop  (cost=0.29..5.84 rows=1 width=72)
+        ->  Index Scan using idx_mascota_catalogo on mascota m  (cost=0.14..2.36 rows=1 width=44)
+              Index Cond: (estado = 'disponible'::text)
+        ->  Index Scan using refugio_pkey on refugio r  (cost=0.15..2.37 rows=1 width=36)
+              Index Cond: (id = m.refugio_id)
+              Filter: (estado_verificacion = 'verificado'::text)
+
+==============================================================================
+RESULTADO: CUMPLE. PostgreSQL, roles y contratos verificados.
+==============================================================================

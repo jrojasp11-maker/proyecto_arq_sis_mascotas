@@ -8,9 +8,10 @@ Escenarios:
   B) RNF-07: 2.000 fichas, 5.000 adoptantes simulados como consultas al
      catálogo, 50 usuarios concurrentes. Umbral: p95 <= 1.000 ms.
 
-El corte no tiene entidad ``adoptante``: cada adoptante se modela como una
-petición HTTP de consulta al catálogo (RF-34), que es la operación que el RNF
-evalúa. No se simulan respuestas: todas vienen de la API real.
+El rol ``adoptante`` forma parte de la autenticación desde la semana 15: cada
+adoptante se modela como una petición HTTP autenticada al catálogo (RF-34), que
+es la operación que el RNF evalúa. No se simulan respuestas: todas vienen de la
+API real.
 
 Uso:
     python -m pruebas.rnf_escalabilidad
@@ -33,7 +34,7 @@ import httpx
 import uvicorn
 
 from pruebas.rnf_desempeno import recrear_base
-from pruebas.servidor import servidor_api
+from pruebas.servidor import servidor_api, token_de_cliente
 
 RAIZ = Path(__file__).resolve().parent.parent
 EVIDENCIAS = RAIZ / "evidencias"
@@ -158,6 +159,9 @@ def main() -> int:
             timeout=10,
             limits=httpx.Limits(max_connections=100, max_keepalive_connections=50),
         ) as cliente:
+            cliente.headers.update(
+                {"Authorization": f"Bearer {token_de_cliente(cliente)}"}
+            )
             cliente.get("/api/v1/mascotas", params={"pagina": 1, "por_pagina": 20})
             registros_05, reintentos_05 = medir(
                 cliente,
@@ -194,6 +198,9 @@ def main() -> int:
             timeout=10,
             limits=httpx.Limits(max_connections=HILOS, max_keepalive_connections=HILOS),
         ) as cliente:
+            cliente.headers.update(
+                {"Authorization": f"Bearer {token_de_cliente(cliente)}"}
+            )
             cliente.get("/api/v1/mascotas", params={"pagina": 1, "por_pagina": 20})
             registros_07, reintentos_07 = medir(
                 cliente, total_07, ADOPTANTES_RNF07, HILOS

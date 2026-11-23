@@ -95,19 +95,19 @@ def test_recorrido_completo_rf05_y_rf34(cliente, ruta_db):
     assert 7 not in [m["id"] for m in final.json()["mascotas"]]
 
 
-def test_rechazo_ausencia_y_entrada_invalida(cliente, ruta_db):
+def test_rechazo_ausencia_y_entrada_invalida(cliente_admin, ruta_db):
     antes = contar(ruta_db, "mascota")
 
-    rechazo = cliente.post("/api/v1/mascotas", json=datos_mascota(refugio_id=2))
+    rechazo = cliente_admin.post("/api/v1/mascotas", json=datos_mascota(refugio_id=2))
     assert rechazo.status_code == 409
     assert rechazo.json()["codigo"] == "ERR-009"
     assert contar(ruta_db, "mascota") == antes
 
-    invalida = cliente.get("/api/v1/mascotas", params={"especie": "conejo"})
+    invalida = cliente_admin.get("/api/v1/mascotas", params={"especie": "conejo"})
     assert invalida.status_code == 400
     assert invalida.json()["codigo"] == "ERR-004"
 
-    ausencia = cliente.get(
+    ausencia = cliente_admin.get(
         "/api/v1/mascotas", params={"especie": "gato", "tamano": "grande"}
     )
     assert ausencia.status_code == 200

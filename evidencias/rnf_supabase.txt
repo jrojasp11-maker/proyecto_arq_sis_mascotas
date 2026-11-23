@@ -1,0 +1,63 @@
+RNF-05 Y RNF-07 CON POSTGRESQL/SUPABASE - VERIFICACION HTTP REAL
+==============================================================================
+Fecha de ejecucion: 2026-11-21T22:35:39
+Python: 3.12.10
+Base: PostgreSQL/Supabase | Esquema: aqsis
+Servidor: Uvicorn temporal con 4 procesos | Cliente: httpx
+Las respuestas vienen de la API real; no se simulan tiempos ni datos.
+==============================================================================
+
+RNF-05 secuencial | 1000 fichas | 20 consultas
+------------------------------------------------------------------------------
+Respuestas correctas: 20/20
+Minimo: 105.21 ms
+Promedio: 106.40 ms
+p95: 107.66 ms
+Maximo: 109.05 ms
+Criterio: cada consulta <= 1000 ms
+RESULTADO: CUMPLE
+
+RNF-05 concurrente - 50 usuarios sobre PostgreSQL
+------------------------------------------------------------------------------
+Peticiones ejecutadas: 1000
+Reintentos por corte de conexion: 0
+Respuestas correctas (HTTP 200 y total=1000): 1000/1000
+Respuestas dentro del umbral (<= 1000 ms): 987/1000
+Criterio aplicado: p95 <= 1000 ms
+Minimo: 162.08 ms
+Promedio: 390.04 ms
+p95: 731.45 ms
+Maximo: 1290.38 ms
+Cinco respuestas mas lentas (peticion, ms, HTTP, total):
+  #  46    1290.38 ms  200  1000
+  #  44    1085.56 ms  200  1000
+  #  47    1083.91 ms  200  1000
+  #  29    1083.62 ms  200  1000
+  #  32    1083.44 ms  200  1000
+RESULTADO: CUMPLE
+
+RNF-07 | 2000 fichas | 5000 adoptantes (consultas con rol adoptante) | 50 hilos
+Cada adoptante se modela como una consulta al catalogo con JWT.
+------------------------------------------------------------------------------
+RNF-07 escalabilidad sobre PostgreSQL
+------------------------------------------------------------------------------
+Peticiones ejecutadas: 5000
+Reintentos por corte de conexion: 0
+Respuestas correctas (HTTP 200 y total=2000): 5000/5000
+Respuestas dentro del umbral (<= 1000 ms): 5000/5000
+Criterio aplicado: p95 <= 1000 ms
+Minimo: 173.14 ms
+Promedio: 405.11 ms
+p95: 494.45 ms
+Maximo: 976.20 ms
+Cinco respuestas mas lentas (peticion, ms, HTTP, total):
+  #  12     976.20 ms  200  2000
+  #  46     965.22 ms  200  2000
+  #  42     962.46 ms  200  2000
+  #  47     957.09 ms  200  2000
+  #  50     956.73 ms  200  2000
+RESULTADO: CUMPLE
+
+==============================================================================
+RESULTADO FINAL: CUMPLE. RNF-05 y RNF-07 verificados contra Supabase.
+==============================================================================

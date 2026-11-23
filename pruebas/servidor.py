@@ -10,7 +10,20 @@ import threading
 import time
 from collections.abc import Iterator
 
+import httpx
 import uvicorn
+
+CLAVE_DEMO = "Aqsis2026!"
+
+
+def token_de_cliente(cliente: httpx.Client, usuario: str = "adoptante") -> str:
+    """Obtiene un JWT de prueba para las verificaciones por HTTP real."""
+    respuesta = cliente.post(
+        "/api/v1/auth/token",
+        json={"usuario": usuario, "contrasena": CLAVE_DEMO},
+    )
+    respuesta.raise_for_status()
+    return respuesta.json()["access_token"]
 
 
 def _puerto_libre() -> int:
@@ -21,17 +34,30 @@ def _puerto_libre() -> int:
 
 @contextlib.contextmanager
 def servidor_api(
-    ruta_db: str, puerto: int | None = None, workers: int = 1
+    ruta_db: str | None = None,
+    puerto: int | None = None,
+    workers: int = 1,
+    usar_postgres: bool = False,
 ) -> Iterator[str]:
     """Levanta la API y entrega la URL base; la apaga al salir.
 
     ``workers`` permite reproducir una instalación con varios procesos, como
     ocurre en un despliegue real. Con un solo proceso se usa el objeto ``app``
-    directamente para no depender del importador de Uvicorn.
+    directamente para no depender del importador de Uvicorn. Con
+    ``usar_postgres=True`` se conserva ``DATABASE_URL`` para apuntar a Supabase.
     """
     from api.main import app
 
-    os.environ["DB_PATH"] = str(ruta_db)
+    if usar_postgres:
+        os.environ.pop("DB_PATH", None)
+    else:
+        if ruta_db is None:
+            raise ValueError("ruta_db es obligatoria cuando no se usa PostgreSQL")
+        os.environ["DB_PATH"] = str(ruta_db)
+        os.environ.pop("DATABASE_URL", None)
+    os.environ.setdefault(
+        "AUTH_JWT_SECRET", "aqsis-secreto-local-pruebas-largo-2026-corte-vertical"
+    )
     puerto = puerto or _puerto_libre()
     objetivo = "api.main:app" if workers > 1 else app
 

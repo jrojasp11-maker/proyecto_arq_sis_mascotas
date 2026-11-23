@@ -41,11 +41,12 @@ def test_crear_ficha_valida_201(cliente, ruta_db):
     assert ficha["id"] in [m["id"] for m in catalogo.json()["mascotas"]]
 
 
-def test_crear_refugio_no_verificado_409(cliente, ruta_db):
+def test_crear_refugio_no_verificado_409(cliente_admin, ruta_db):
+    # admin puede publicar por cualquier refugio; así se alcanza la regla RN-03.
     antes_mascotas = contar(ruta_db, "mascota")
     antes_fotos = contar(ruta_db, "fotografia")
 
-    respuesta = cliente.post(
+    respuesta = cliente_admin.post(
         "/api/v1/mascotas", json=datos_mascota(refugio_id=2)
     )
 

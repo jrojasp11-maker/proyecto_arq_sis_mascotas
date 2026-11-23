@@ -33,12 +33,12 @@ CASOS_POST = [
 
 @pytest.mark.parametrize("nombre,cambios,estado,codigo", CASOS_POST)
 def test_post_invalido_no_persiste(
-    cliente, ruta_db, nombre, cambios, estado, codigo
+    cliente_admin, ruta_db, nombre, cambios, estado, codigo
 ):
     antes_mascotas = contar(ruta_db, "mascota")
     antes_fotos = contar(ruta_db, "fotografia")
 
-    respuesta = cliente.post("/api/v1/mascotas", json=datos_mascota(**cambios))
+    respuesta = cliente_admin.post("/api/v1/mascotas", json=datos_mascota(**cambios))
 
     assert respuesta.status_code == estado, f"{nombre}: {respuesta.text}"
     assert respuesta.json()["codigo"] == codigo, nombre

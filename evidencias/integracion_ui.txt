@@ -7,7 +7,7 @@ Los envios reproducen las solicitudes que hace frontend/app.js.
 
 UI | GET /ui/ -> 200; /ui/app.js -> 200; /ui/styles.css -> 200
 UI | controles: form-crear, form-catalogo, btn-editar, btn-baja, btn-consultar
-UI | pestanas: crear / editar / catalogo (presentes); relleno automatico: presente
+UI | pestanas: crear / editar / catalogo (presentes); relleno automatico: presente; login y token: presentes
 
 RF-05 valido | POST /api/v1/mascotas -> HTTP 201
   id real devuelto: 7; estado: disponible; fotos: 2

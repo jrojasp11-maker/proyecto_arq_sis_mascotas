@@ -1,8 +1,8 @@
 RNF-05 CONCURRENCIA Y RNF-07 ESCALABILIDAD - VERIFICACION HTTP REAL
 ==============================================================================
-Fecha de ejecucion: 2026-11-20T22:33:07
+Fecha de ejecucion: 2026-11-21T22:33:07
 Python: 3.12.10 | SQLite: 3.49.1
-FastAPI: 0.162.2 | Uvicorn: 0.54.0
+FastAPI: 0.165.0 | Uvicorn: 0.54.0
 Sistema: Windows 11 (Intel64 Family 6 Model 140 Stepping 1, GenuineIntel)
 Servidor: Uvicorn temporal con 4 procesos, cliente httpx con grupo de hilos.
 Metricas: tiempo completo de la respuesta HTTP medido por el cliente.
@@ -15,18 +15,18 @@ RNF-05 - concurrencia de 50 usuarios
 Peticiones ejecutadas: 1000
 Reintentos por corte de conexion: 0
 Respuestas correctas (HTTP 200 y total=1000): 1000/1000
-Respuestas dentro del umbral (<= 1000 ms): 999/1000
+Respuestas dentro del umbral (<= 1000 ms): 1000/1000
 Criterio aplicado: p95 <= 1000 ms
-Minimo: 55.34 ms
-Promedio: 257.41 ms
-p95: 532.11 ms
-Maximo: 1162.23 ms
+Minimo: 91.38 ms
+Promedio: 217.76 ms
+p95: 413.45 ms
+Maximo: 679.22 ms
 Cinco respuestas mas lentas (peticion, ms, HTTP, total):
-  # 315    1162.23 ms  200  1000
-  # 166     983.32 ms  200  1000
-  # 386     870.14 ms  200  1000
-  # 122     865.89 ms  200  1000
-  # 296     806.78 ms  200  1000
+  # 561     679.22 ms  200  1000
+  #  26     594.79 ms  200  1000
+  # 745     574.77 ms  200  1000
+  # 719     566.65 ms  200  1000
+  # 213     560.21 ms  200  1000
 RESULTADO: CUMPLE
 
 RNF-07 | 2000 fichas | 5000 adoptantes simulados | 50 usuarios concurrentes | umbral p95 <= 1000 ms
@@ -37,23 +37,23 @@ se representa con una consulta al catalogo (RF-34) contra la API real.
 RNF-07 - escalabilidad con 2000 fichas y 5000 adoptantes
 ------------------------------------------------------------------------------
 Peticiones ejecutadas: 5000
-Reintentos por corte de conexion: 0
+Reintentos por corte de conexion: 3
 Respuestas correctas (HTTP 200 y total=2000): 5000/5000
-Respuestas dentro del umbral (<= 1000 ms): 4944/5000
+Respuestas dentro del umbral (<= 1000 ms): 5000/5000
 Criterio aplicado: p95 <= 1000 ms
-Minimo: 61.19 ms
-Promedio: 282.00 ms
-p95: 585.77 ms
-Maximo: 1955.70 ms
+Minimo: 78.91 ms
+Promedio: 243.20 ms
+p95: 465.19 ms
+Maximo: 986.62 ms
 Cinco respuestas mas lentas (peticion, ms, HTTP, total):
-  #4207    1955.70 ms  200  2000
-  #4274    1955.63 ms  200  2000
-  #4245    1909.05 ms  200  2000
-  #4269    1840.74 ms  200  2000
-  #4265    1823.88 ms  200  2000
+  #4350     986.62 ms  200  2000
+  #1056     978.33 ms  200  2000
+  #4186     942.16 ms  200  2000
+  #4409     930.69 ms  200  2000
+  #2027     886.91 ms  200  2000
 RESULTADO: CUMPLE
 ------------------------------------------------------------------------------
-Umbral RNF-07: p95 <= 1000 ms; medido p95 = 585.77 ms.
+Umbral RNF-07: p95 <= 1000 ms; medido p95 = 465.19 ms.
 
 ==============================================================================
 RESULTADO FINAL: CUMPLE. RNF-05 y RNF-07 tienen evidencia reproducible.

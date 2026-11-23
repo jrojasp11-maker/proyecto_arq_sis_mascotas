@@ -9,6 +9,11 @@ Thumbs.db
 *.out
 *.toc
 
+# Credenciales y entorno local (no versionar)
+.env
+.env.local
+.env.*.local
+
 # Artefactos de pruebas y bases locales (no versionar)
 .pytest_cache/
 .coverage
@@ -18,3 +23,5 @@ evidencias/rnf_desempeno.db
 evidencias/rnf_concurrencia.db
 evidencias/rnf_escalabilidad.db
 evidencias/integracion_ui.db
+.vercel
+.env*

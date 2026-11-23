@@ -182,6 +182,25 @@ class RepositorioMascotas:
         return conexion
 
     # ------------------------------------------------------------------
+    # Usuarios de autenticación
+    # ------------------------------------------------------------------
+    def obtener_usuario(self, nombre_usuario: str) -> dict[str, Any] | None:
+        """Devuelve el usuario activo por nombre, o ``None`` si no existe."""
+        with closing(self._conectar()) as conexion:
+            fila = conexion.execute(
+                """
+                SELECT id, nombre_usuario, contrasena_hash, rol, refugio_id, activo
+                FROM usuario WHERE nombre_usuario = ? AND activo = 1
+                """,
+                (nombre_usuario,),
+            ).fetchone()
+        if fila is None:
+            return None
+        usuario = dict(fila)
+        usuario["activo"] = bool(usuario["activo"])
+        return usuario
+
+    # ------------------------------------------------------------------
     # RF-05: crear / consultar / actualizar / dar de baja una ficha
     # ------------------------------------------------------------------
     def crear_ficha(

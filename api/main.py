@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
-"""API REST del corte vertical (semana 14).
+"""API REST del corte vertical (semanas 14 y 15).
 
-Flujo: HTTP -> servicio de aplicación -> repositorio -> SQLite.
-La API solo recibe y valida la forma de la petición; las reglas del negocio
-viven en el repositorio/servicio y el SQL no sale de ``persistencia``.
+Flujo: HTTP -> autenticación por rol -> servicio de aplicación -> repositorio
+-> SQLite o PostgreSQL/Supabase. La API solo recibe y valida la forma de la
+petición; las reglas del negocio viven en el repositorio/servicio y el SQL no
+sale de ``persistencia``. Las rutas y las claves JSON documentadas no cambian.
 """
 
 from __future__ import annotations
@@ -19,14 +20,28 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from api.dependencias import obtener_servicio_catalogo, obtener_servicio_mascotas
+from api.dependencias import (
+    obtener_repositorio,
+    obtener_servicio_catalogo,
+    obtener_servicio_mascotas,
+)
 from api.esquemas import (
+    Login,
     MascotaActualizar,
     MascotaCrear,
     MascotaRespuesta,
     PaginaCatalogo,
 )
 from persistencia.repositorio import ErrorPersistencia
+from seguridad.autenticacion import (
+    CredencialesInvalidas,
+    ErrorSeguridad,
+    crear_token,
+    obtener_secreto_jwt,
+    requerir_roles,
+    verificar_contrasena,
+    verificar_propietario,
+)
 from servicios.servicio_catalogo import ServicioCatalogo
 from servicios.servicio_mascotas import ServicioMascotas
 
@@ -80,6 +95,17 @@ async def manejar_error_persistencia(
     )
 
 
+@app.exception_handler(ErrorSeguridad)
+async def manejar_error_seguridad(
+    request: Request, exc: ErrorSeguridad
+) -> JSONResponse:
+    estados = {"ERR-401": 401, "ERR-403": 403, "ERR-003": 403}
+    return JSONResponse(
+        status_code=estados.get(exc.codigo, 403),
+        content={"detail": exc.mensaje, "codigo": exc.codigo},
+    )
+
+
 @app.exception_handler(RequestValidationError)
 async def manejar_error_validacion(
     request: Request, exc: RequestValidationError
@@ -119,6 +145,34 @@ router = APIRouter(prefix="/api/v1", tags=["mascotas"])
 
 
 @router.post(
+    "/auth/token",
+    tags=["autenticacion"],
+    summary="Autenticación básica por rol: devuelve un JWT HS256",
+    responses={401: {"description": "Credenciales inválidas (ERR-401)"}},
+)
+def iniciar_sesion(
+    datos: Login,
+    repositorio=Depends(obtener_repositorio),
+) -> dict:
+    """Endpoint nuevo: no modifica rutas ni claves de los contratos existentes."""
+    usuario = repositorio.obtener_usuario(datos.usuario)
+    if (
+        usuario is None
+        or not usuario.get("activo")
+        or not verificar_contrasena(datos.contrasena, usuario["contrasena_hash"])
+    ):
+        raise CredencialesInvalidas()
+    token = crear_token(usuario, obtener_secreto_jwt())
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "rol": usuario["rol"],
+        "refugio_id": usuario.get("refugio_id"),
+        "expires_in": 3600,
+    }
+
+
+@router.post(
     "/mascotas",
     response_model=MascotaRespuesta,
     status_code=201,
@@ -132,7 +186,9 @@ router = APIRouter(prefix="/api/v1", tags=["mascotas"])
 def crear_mascota(
     datos: MascotaCrear,
     servicio: ServicioMascotas = Depends(obtener_servicio_mascotas),
+    usuario: dict = Depends(requerir_roles("refugio", "admin")),
 ) -> dict:
+    verificar_propietario(datos.refugio_id, usuario)
     return servicio.crear(datos.model_dump())
 
 
@@ -150,7 +206,9 @@ def actualizar_mascota(
     mascota_id: Annotated[int, Path(gt=0)],
     datos: MascotaActualizar,
     servicio: ServicioMascotas = Depends(obtener_servicio_mascotas),
+    usuario: dict = Depends(requerir_roles("refugio", "admin")),
 ) -> dict:
+    verificar_propietario(datos.refugio_id, usuario)
     return servicio.actualizar(mascota_id, datos.model_dump(exclude_unset=True))
 
 
@@ -167,7 +225,9 @@ def dar_de_baja_mascota(
     mascota_id: Annotated[int, Path(gt=0)],
     refugio_id: Annotated[int, Query(gt=0, description="Refugio dueño de la ficha")],
     servicio: ServicioMascotas = Depends(obtener_servicio_mascotas),
+    usuario: dict = Depends(requerir_roles("refugio", "admin")),
 ) -> Response:
+    verificar_propietario(refugio_id, usuario)
     servicio.dar_de_baja(mascota_id, refugio_id)
     return Response(status_code=204)
 
@@ -188,6 +248,7 @@ def listar_catalogo(
     pagina: Annotated[int, Query(ge=1)] = 1,
     por_pagina: Annotated[int, Query(ge=1, le=100)] = 20,
     servicio: ServicioCatalogo = Depends(obtener_servicio_catalogo),
+    _usuario: dict = Depends(requerir_roles("adoptante", "refugio", "admin")),
 ) -> dict:
     return servicio.listar(
         especie=especie,

@@ -6,6 +6,7 @@ PRAGMA foreign_keys = ON;
 
 DROP TABLE IF EXISTS fotografia;
 DROP TABLE IF EXISTS mascota;
+DROP TABLE IF EXISTS usuario;
 DROP TABLE IF EXISTS refugio;
 
 CREATE TABLE refugio (
@@ -14,6 +15,16 @@ CREATE TABLE refugio (
     localidad           TEXT    NOT NULL,
     estado_verificacion TEXT    NOT NULL DEFAULT 'pendiente'
         CHECK (estado_verificacion IN ('pendiente', 'verificado', 'rechazado'))
+);
+
+-- Usuarios demo de la autenticación por rol (refugio, adoptante, admin).
+CREATE TABLE usuario (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre_usuario  TEXT    NOT NULL UNIQUE CHECK (length(nombre_usuario) BETWEEN 3 AND 80),
+    contrasena_hash TEXT    NOT NULL,
+    rol             TEXT    NOT NULL CHECK (rol IN ('refugio', 'adoptante', 'admin')),
+    refugio_id      INTEGER REFERENCES refugio(id) ON DELETE SET NULL,
+    activo          INTEGER NOT NULL DEFAULT 1 CHECK (activo IN (0, 1))
 );
 
 CREATE TABLE mascota (

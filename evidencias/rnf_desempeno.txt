@@ -1,43 +1,43 @@
 RNF-05 - EFICIENCIA DE DESEMPEÑO / COMPORTAMIENTO TEMPORAL
 ==============================================================================
-Fecha de ejecución: 2026-11-20T21:53:39
+Fecha de ejecución: 2026-11-21T22:33:06
 Python: 3.12.10 | SQLite: 3.49.1
-FastAPI: 0.162.2 | Uvicorn: 0.54.0
+FastAPI: 0.165.0 | Uvicorn: 0.54.0
 Base de datos: C:\Users\user\Downloads\AQSIS\proyecto_arq_sis_mascotas\evidencias\rnf_desempeno.db
 Fichas publicadas: 1000
 Consultas consecutivas: 20
 Umbral por consulta: <= 1000 ms
 Métrica: tiempo completo de la respuesta HTTP medida por el cliente.
-Alcance: verificación secuencial; la concurrencia de 50 usuarios queda para la semana 3.
+Alcance: verificación secuencial; la concurrencia de 50 usuarios se mide en pruebas/rnf_escalabilidad.py (semana 15).
 ------------------------------------------------------------------------------
   #  HTTP         ms   total
 ------------------------------------------------------------------------------
-  1   200       6.27    1000
-  2   200       6.62    1000
-  3   200       5.50    1000
-  4   200       5.64    1000
-  5   200       6.28    1000
-  6   200       6.57    1000
-  7   200       6.15    1000
-  8   200       7.52    1000
-  9   200       5.58    1000
- 10   200       7.76    1000
- 11   200       6.39    1000
- 12   200       6.99    1000
- 13   200       6.08    1000
- 14   200       5.18    1000
- 15   200       5.94    1000
- 16   200       5.18    1000
- 17   200       6.54    1000
- 18   200       5.69    1000
- 19   200       6.09    1000
- 20   200       4.75    1000
+  1   200       3.78    1000
+  2   200       3.57    1000
+  3   200       3.31    1000
+  4   200       3.70    1000
+  5   200       3.64    1000
+  6   200       3.41    1000
+  7   200       3.60    1000
+  8   200       3.39    1000
+  9   200       3.64    1000
+ 10   200       3.45    1000
+ 11   200       3.40    1000
+ 12   200       3.33    1000
+ 13   200       3.61    1000
+ 14   200       3.48    1000
+ 15   200       3.30    1000
+ 16   200       3.34    1000
+ 17   200       3.50    1000
+ 18   200       4.51    1000
+ 19   200       3.26    1000
+ 20   200       3.36    1000
 ------------------------------------------------------------------------------
 Respuestas correctas (200 y total=1000): 20/20
 Consultas dentro del umbral: 20/20
-Mínimo: 4.75 ms
-Promedio: 6.14 ms
-p95: 7.52 ms
-Máximo: 7.76 ms
+Mínimo: 3.26 ms
+Promedio: 3.53 ms
+p95: 3.78 ms
+Máximo: 4.51 ms
 ------------------------------------------------------------------------------
 RESULTADO: CUMPLE (verificación secuencial).

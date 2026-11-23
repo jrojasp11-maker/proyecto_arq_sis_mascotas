@@ -18,7 +18,7 @@ from pathlib import Path
 import httpx
 
 from persistencia.inicializar_db import inicializar
-from pruebas.servidor import servidor_api
+from pruebas.servidor import servidor_api, token_de_cliente
 
 RAIZ = Path(__file__).resolve().parent.parent
 EVIDENCIAS = RAIZ / "evidencias"
@@ -74,6 +74,9 @@ def main() -> int:
 
     with servidor_api(ruta) as url_base:
         with httpx.Client(base_url=url_base, timeout=10) as cliente:
+            cliente.headers.update(
+                {"Authorization": f"Bearer {token_de_cliente(cliente, 'refugio')}"}
+            )
             crear = cliente.post("/api/v1/mascotas", json=CUERPO_CREAR)
             registrar(
                 lineas,

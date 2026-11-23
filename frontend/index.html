@@ -12,6 +12,18 @@
     <h1>Adopción responsable de mascotas</h1>
     <p>Interfaz mínima del corte vertical: RF-05 (ficha) y RF-34 (catálogo). Consume la API real en <code>/api/v1</code>.</p>
     <div class="barra-demo">
+      <label for="login-usuario">Rol:</label>
+      <select id="login-usuario">
+        <option value="refugio">refugio</option>
+        <option value="adoptante">adoptante</option>
+        <option value="admin">admin</option>
+      </select>
+      <label for="login-contrasena">Contraseña:</label>
+      <input id="login-contrasena" type="password" placeholder="la indicada para la demo" size="14">
+      <button id="btn-login" type="button" class="secundario">Iniciar sesión</button>
+      <span id="estado-login" class="estado" role="status" aria-live="polite"></span>
+    </div>
+    <div class="barra-demo">
       <button id="btn-rellenar" type="button" class="secundario">Rellenar datos de ejemplo</button>
       <span id="estado-demo" class="estado" role="status" aria-live="polite"></span>
     </div>
