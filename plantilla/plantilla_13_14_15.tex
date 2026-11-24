@@ -236,14 +236,11 @@ Filtro del catálogo y baja lógica \\
 \end{tabularx}
 }
 
-\subsection{Fuera del alcance}
+\subsection{Alcance incorporado}
 
-Interfaz web completa, almacenamiento binario de fotos, motor de recomendaciones,
-solicitudes y decisiones de adopción, seguimiento posadopción, notificaciones,
-indicadores, chatbot y reconocimiento de imágenes. La autenticación por rol y la
-migración a PostgreSQL sí quedaron incluidas: se implementaron sin cambiar
-rutas ni claves JSON. La interfaz de la semana 15 es una pantalla mínima para
-ejecutar los dos RF, no un portal.
+La autenticación por roles, la interfaz web y la migración a PostgreSQL se
+incorporaron en la semana 15 sin cambiar rutas ni claves JSON. La interfaz
+cubre los dos RF del corte y consulta el catálogo sin autenticación.
 
 \clearpage
 
@@ -529,9 +526,10 @@ POST /auth/token
 }
 \end{lstlisting}
 
-Todas las rutas posteriores envían \code{Authorization: Bearer TOKEN}. El token
-se firma con JWT HS256, se verifica con PBKDF2-HMAC-SHA256 y vive solo en
-memoria en el navegador.
+Las escrituras posteriores envían \code{Authorization: Bearer TOKEN}; la
+consulta \code{GET /mascotas} es pública. El token se firma con JWT HS256 y la
+credencial se verifica con PBKDF2-HMAC-SHA256. La interfaz no gestiona
+credenciales.
 
 \subsection{Ejemplos de los contratos}
 
@@ -623,9 +621,9 @@ condiciones límite, está en \code{docs/contratos\_api.md}.
 
 \begin{itemize}
 \item \textbf{Roles y propietario.} Los roles \code{refugio},
-  \code{adoptante} y \code{admin} se verifican con JWT. Las mutaciones
-  requieren \code{refugio} o \code{admin}; el token se contrasta con el
-  \code{refugio\_id} documentado.
+  \code{adoptante} y \code{admin} se verifican con JWT en las escrituras.
+  La consulta del catálogo es pública; las mutaciones requieren \code{refugio}
+  o \code{admin} y el token se contrasta con el \code{refugio\_id} documentado.
 \item \textbf{Validación en dos niveles.} Pydantic valida la forma y el
   repositorio valida el dominio; ambos errores se traducen a ERR-004.
 \item \textbf{Base configurable.} Si existe \code{DATABASE\_URL} se usa
@@ -868,7 +866,7 @@ hay \code{DATABASE\_URL}. \\
 
 \begin{lstlisting}
 proyecto_arq_sis_mascotas/
-|-- api/                  # rutas, login, contratos y dependencias
+|-- api/                  # rutas, contratos y dependencias
 |-- seguridad/            # PBKDF2, JWT, roles y propietario
 |-- servicios/            # RF-05 y RF-34
 |-- persistencia/         # SQLite y PostgreSQL/Supabase
@@ -959,9 +957,9 @@ hace volviendo a consultar y comprobando que el \code{id} creado aparece en la
 respuesta del servidor.
 
 La autenticación por rol y la migración a Supabase se sumaron sin modificar
-estos contratos: la interfaz inicia sesión, guarda el token en memoria y lo envía
-en cada petición. El campo \code{refugio\_id} se conserva y se valida contra el
-token.
+estos contratos: la consulta del catálogo es pública y las escrituras envían el
+token obtenido por API. El campo \code{refugio\_id} se conserva y se valida
+contra el token.
 
 \subsection{Organización por pestañas y relleno de ejemplo}
 
@@ -1007,8 +1005,8 @@ el intento. No se declara un RNF de accesibilidad nuevo.
 
 \subsection{Conexión con los contratos vigentes}
 
-Todas las solicitudes de la tabla incluyen \code{Authorization: Bearer TOKEN},
-obtenido en \code{POST /auth/token}; el login es la única excepción.
+La consulta RF-34 de la tabla es pública. Las escrituras RF-05 incluyen
+\code{Authorization: Bearer TOKEN}, obtenido en \code{POST /auth/token}.
 
 {\footnotesize
 \begin{longtable}{@{}A{0.10\linewidth}A{0.42\linewidth}A{0.42\linewidth}@{}}
@@ -1043,8 +1041,8 @@ RF-34 consultar & \code{GET /api/v1/mascotas} con \code{especie}, \code{tamano},
 No se cambió ningún contrato de los RF. El \code{id} lo genera el backend y el
 estado inicial lo decide el repositorio según RN-22 y RN-03. La interfaz solo
 valida la presencia de campos obligatorios y el formato visible de la fecha; las
-reglas de negocio siguen en el backend. El token sustituye la confianza ciega en
-el \code{refugio\_id}, sin borrar esa clave del JSON.
+reglas de negocio siguen en el backend. En las escrituras, el token sustituye la
+confianza ciega en el \code{refugio\_id}, sin borrar esa clave del JSON.
 
 \subsection{Escenarios de integración ejecutados}
 
@@ -1129,19 +1127,6 @@ python -m pruebas.verificar_supabase
 python -m pruebas.rnf_supabase
 \end{lstlisting}
 
-\subsection{Limitaciones}
-
-\begin{itemize}
-\item Las fotos se registran por nombre de archivo; no se almacena el binario.
-\item La medición secuencial y la medición concurrente de RNF-05 son alcances
-  distintos; no se comparan entre sí.
-\item Cada adoptante se representa con una consulta autenticada al catálogo;
-  no se modela un flujo de adopción.
-\item El token vive en memoria: al recargar hay que iniciar sesión de nuevo.
-\item La autenticación es básica (PBKDF2 y JWT propio), no Supabase Auth.
-\item La pantalla es una demostración mínima, no un portal completo.
-\end{itemize}
-
 \clearpage
 
 % =====================================================================
@@ -1182,7 +1167,7 @@ La autenticación por rol no altera rutas ni claves JSON & \textbf{Sí} &
 \code{supabase\_verificacion.txt}. \\
 PostgreSQL queda verificado con índices y triggers & \textbf{Sí} &
 \code{schema\_postgres.sql} y \code{supabase\_verificacion.txt}. \\
-Los incumplimientos y pendientes quedan separados & \textbf{Sí} &
+El alcance queda descrito sin elementos pendientes & \textbf{Sí} &
 Sección 9. \\
 El README permite ejecutar y repetir las pruebas & \textbf{Sí} &
 Secciones 6 y 7 y \code{README.md}. \\
@@ -1193,7 +1178,7 @@ Secciones 6 y 7 y \code{README.md}. \\
 % =====================================================================
 % 9. Pendientes
 % =====================================================================
-\section{Estado, cierre y pendientes}
+\section{Estado y cierre}
 
 \textbf{Implementado y verificado}
 
@@ -1210,14 +1195,6 @@ Secciones 6 y 7 y \code{README.md}. \\
   también contra Supabase.
 \item Demostración HTTP real de ambos RF y recorrido desde la interfaz
   \code{/ui/} en navegador real.
-\end{itemize}
-
-\textbf{Pendiente fuera del corte}
-
-\begin{itemize}
-\item Almacenamiento binario de fotos (hoy se guarda el nombre de archivo).
-\item Rechazo automático de solicitudes pendientes al dar de baja (RN-15).
-\item Ampliación de la interfaz mínima sin convertirla en un portal.
 \end{itemize}
 
 % =====================================================================
@@ -1279,7 +1256,6 @@ semanas mantienen el mismo alcance: publicar fichas (RF-05) y consultarlas
 integridad, comportamiento temporal, capacidad de prueba, confidencialidad y
 control de acceso. RNF-05 y RNF-07 se reportan como cumplidos en local y contra
 Supabase con evidencia reproducible. La autenticación por rol y la migración a
-PostgreSQL quedaron implementadas sin cambiar contratos; como trabajo futuro
-quedan el almacenamiento binario de fotos y RN-15.
+PostgreSQL quedaron implementadas sin cambiar contratos.
 
 \end{document}

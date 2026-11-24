@@ -16,7 +16,7 @@ implementa la inteligencia artificial.
 | 13 | Persistencia de los dos RF priorizados | Esquema, repositorio y 12 pruebas |
 | 14 | Servicios, API, contratos y verificación de RNF | API FastAPI, 39 pruebas y evidencias de calidad |
 | **15** | **Interfaz mínima, integración con la API real y cierre de la matriz RF–RNF** | **Pantalla `/ui/`, 53 pruebas e integración verificada** |
-| 3 (prototipo) | Autenticación, roles y PostgreSQL | Implementado: Supabase (`aqsis`), JWT por rol y verificación remota |
+| 3 (semana 15) | Autenticación, roles y PostgreSQL | Implementado: Supabase (`aqsis`), JWT por rol y verificación remota |
 
 | Orden | RF | Resultado observable |
 |---|---|---|
@@ -57,7 +57,7 @@ proyecto_arq_sis_mascotas/
 │   ├── app.js                  # fetch a /api/v1, estados y mensajes
 │   └── styles.css              # estilos y contraste de la interfaz
 ├── api/
-│   ├── main.py                 # rutas, login, CORS, errores HTTP y /ui/
+│   ├── main.py                 # rutas, CORS, errores HTTP y /ui/
 │   ├── esquemas.py             # contratos Pydantic (incluye Login)
 │   └── dependencias.py         # selecciona PostgreSQL o SQLite
 ├── seguridad/
@@ -76,7 +76,7 @@ proyecto_arq_sis_mascotas/
 │   ├── prueba_persistencia.py  # 12 pruebas de la semana 13
 │   └── demo_consulta.py        # consulta manual del catálogo
 ├── pruebas/
-│   ├── test_autenticacion.py   # login, roles, JWT y propietario
+│   ├── test_autenticacion.py   # roles, JWT y propietario
 │   ├── test_rf05_api.py        # pruebas funcionales de RF-05
 │   ├── test_rf34_api.py        # pruebas funcionales de RF-34
 │   ├── test_rnf10_integridad.py # matriz de entradas inválidas
@@ -120,12 +120,12 @@ proyecto_arq_sis_mascotas/
 Flujo completo del corte vertical:
 
 ```text
-Interfaz (/ui/) -> HTTP + JWT -> API (/api/v1) -> Servicio de aplicación -> Repositorio -> SQLite o PostgreSQL/Supabase
+Interfaz (/ui/) -> HTTP -> API (/api/v1) -> Servicio de aplicación -> Repositorio -> SQLite o PostgreSQL/Supabase
 ```
 
 | Capa | Dónde | Responsabilidad |
 |---|---|---|
-| Interfaz | `frontend/` | Mostrar los dos RF, iniciar sesión, conservar entradas y reflejar estados; envía el JWT en la cabecera `Authorization`. El token vive solo en memoria. |
+| Interfaz | `frontend/` | Mostrar los dos RF, consultar el catálogo sin autenticación, conservar entradas y reflejar estados. No gestiona credenciales. |
 | Seguridad | `seguridad/autenticacion.py` | Verificar contraseñas PBKDF2, firmar JWT HS256, exigir roles y comprobar el refugio propietario. |
 | API | `api/main.py` | Recibir HTTP, autenticar, validar la forma, delegar y traducir errores. No contiene reglas ni SQL. |
 | Servicio | `servicios/` | Coordinar el caso de uso, normalizar la respuesta y decidir la ausencia de una ficha. |
@@ -218,8 +218,7 @@ Formato de error:
 Todas las rutas anteriores conservan sus nombres y claves JSON. El campo
 `refugio_id` sigue presente por compatibilidad en POST/PUT/DELETE, pero la API
 verifica que coincida con el token (o que el actor sea `admin`). `GET
-/api/v1/mascotas` acepta cualquiera de los tres roles. El login es el único
-endpoint nuevo.
+/api/v1/mascotas` es público. `/auth/token` es el único endpoint nuevo.
 
 Usuarios demo: `refugio` (refugio 1), `adoptante` y `admin`. La credencial de
 demostración se gestiona fuera del repositorio y no se muestra en documentos,
@@ -378,7 +377,7 @@ python prueba_persistencia.py
 Salida esperada: `RESUMEN: 12/12 pruebas pasaron`
 (`evidencias/salida_pruebas.txt`).
 
-## 10. Estado, cierre y pendientes
+## 10. Estado y cierre
 
 **Implementado y verificado en la semana 15**
 
@@ -400,12 +399,11 @@ Salida esperada: `RESUMEN: 12/12 pruebas pasaron`
   traducción de errores y CORS.
 - RNF-04, RNF-08 y RNF-10 con evidencia; RNF-05 y RNF-07 medidos por HTTP real.
 
-**Pendiente fuera de este corte**
+**Alcance de la entrega**
 
-- Almacenamiento binario de fotos (hoy se guarda el nombre de archivo).
-- Rechazo automático de solicitudes pendientes al dar de baja (RN-15).
-- Ampliación de la interfaz sin convertirla en un portal; la pantalla ya cubre
-  los dos RF del corte.
+- La interfaz cubre los dos RF del corte y consulta el catálogo sin autenticación.
+- Las escrituras conservan `refugio_id` y validan el rol y el propietario contra
+  el token obtenido por API.
 
 **Estado final:** contratos en `docs/contratos_api.md`, interfaz en `/ui/`,
 datos iniciales en SQLite con `python -m persistencia.inicializar_db` y datos

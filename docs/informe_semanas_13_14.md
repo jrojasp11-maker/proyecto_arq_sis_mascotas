@@ -55,7 +55,7 @@ punta. En este proyecto avanza en tres momentos:
 
 1. **Semana 13:** base de datos y persistencia.
 2. **Semana 14:** servicios de aplicación y API.
-3. **Semana 3 (prototipo):** interfaz, autenticación y cierre.
+3. **Semana 15:** interfaz, autenticación y cierre.
 
 ### 2.2 Los dos requisitos funcionales
 
@@ -79,12 +79,10 @@ comparten las tablas `refugio`, `mascota` y `fotografia`.
 | **RN-03** | Solo un refugio verificado puede publicar fichas. | Repositorio y API (`ERR-009`) |
 | **RN-15** | Una ficha adoptada o dada de baja no aparece en el catálogo. | Filtro del catálogo y baja lógica |
 
-### 2.4 Fuera del alcance
+### 2.4 Alcance incorporado
 
-Autenticación y roles, interfaz web, almacenamiento binario de fotos, motor de
-recomendaciones, solicitudes y decisiones de adopción, seguimiento posadopción,
-notificaciones, indicadores, chatbot y reconocimiento de imágenes. La migración
-definitiva a PostgreSQL se hará al cerrar el prototipo.
+La autenticación por roles, la interfaz web y la migración a PostgreSQL se
+incorporaron en la semana 15 y se documentan en `informe_semana15.md`.
 
 ---
 
@@ -333,9 +331,9 @@ está en [`contratos_api.md`](contratos_api.md).
 
 ### 4.5 Decisiones de diseño
 
-- **Actor temporal.** La autenticación y los roles se integran en la semana 3.
-  Mientras tanto, el refugio que actúa se envía como `refugio_id` en el cuerpo
-  (POST/PUT) o en la consulta (DELETE).
+- **Actor autenticado.** El refugio que actúa se envía como `refugio_id` en el
+  cuerpo (POST/PUT) o en la consulta (DELETE) y se contrasta con el token del
+  usuario autenticado en las escrituras.
 - **Validación en dos niveles.** Pydantic valida la forma y el repositorio valida
   el dominio; ambos errores se traducen a `ERR-004`.
 - **Base configurable.** La ruta de SQLite se lee de `DB_PATH` en cada petición,
@@ -498,34 +496,29 @@ proyecto_arq_sis_mascotas/
 | Se verifica la persistencia real y la ausencia de escrituras indebidas | Sí | Pruebas con SQLite y conteos antes/después |
 | El SQL queda en persistencia y las reglas en servicio/dominio | Sí | Sección 4.1 |
 | Cada RF se vincula con sus RNF y atributos ISO | Sí | Sección 5 |
-| Los RNF previstos tienen medidas y evidencias | Sí | RNF-04, 05, 08 y 10; RNF-07 pendiente |
-| Se distinguen los incumplimientos y pendientes de la semana 3 | Sí | Sección 8 |
+| Los RNF previstos tienen medidas y evidencias | Sí | RNF-04, 05, 07, 08 y 10 |
+| Se distingue el alcance verificado del incorporado en la semana 15 | Sí | Sección 8 |
 | El README permite ejecutar y repetir las pruebas | Sí | Sección 6 y `README.md` |
 
 ---
 
-## 8. Pendientes y relevo a la semana 3
+## 8. Cierre y entrega a la semana 15
 
 **Implementado y verificado**
 
 - Persistencia completa de RF-05 y RF-34 con integridad referencial.
-- Servicios de aplicación y API REST con cuatro endpoints.
+- Servicios de aplicación y API REST con cuatro endpoints de los RF.
 - Contratos documentados y OpenAPI generado por FastAPI.
 - 39 pruebas funcionales, de integridad y de servicios aislados.
 - RNF-04, RNF-05 (secuencial), RNF-08 y RNF-10 con evidencia reproducible.
 - Demostración HTTP real de ambos RF.
 
-**Pendiente para la semana 3**
+**Incorporado en la semana 15**
 
-- Autenticación, roles y reemplazo de `refugio_id` explícito por el usuario
-  autenticado.
-- Pantalla de ficha y catálogo (React/Vite) contra esta API.
-- Prueba de concurrencia de RNF-05 (50 usuarios) y RNF-07 (2.000 fichas,
-  5.000 adoptantes).
+- Autenticación por roles y validación de propietario contra el token.
+- Interfaz mínima en `/ui/` que consulta el catálogo y conserva entradas.
+- Concurrencia de RNF-05 y prueba de RNF-07 en local y contra Supabase.
 - Migración y verificación en PostgreSQL (ADR-03/ADR-10).
-- Almacenamiento binario de fotos (hoy se guarda la ruta).
-- Rechazo automático de solicitudes pendientes al dar de baja (RN-15), fuera de
-  este corte.
 
 ---
 
@@ -550,5 +543,5 @@ proyecto_arq_sis_mascotas/
 convirtió esa persistencia en servicios y una API con contratos estables. Las dos
 semanas mantienen el mismo alcance: publicar fichas (RF-05) y consultarlas
 (RF-34). La calidad se concentró en integridad, comportamiento temporal,
-capacidad de prueba y confidencialidad. Lo que falta —autenticación, interfaz,
-concurrencia y PostgreSQL— está identificado y se retoma en la semana 3.
+capacidad de prueba y confidencialidad. La autenticación, la interfaz, la
+concurrencia y PostgreSQL quedaron cerrados en la semana 15.

@@ -248,7 +248,6 @@ def listar_catalogo(
     pagina: Annotated[int, Query(ge=1)] = 1,
     por_pagina: Annotated[int, Query(ge=1, le=100)] = 20,
     servicio: ServicioCatalogo = Depends(obtener_servicio_catalogo),
-    _usuario: dict = Depends(requerir_roles("adoptante", "refugio", "admin")),
 ) -> dict:
     return servicio.listar(
         especie=especie,

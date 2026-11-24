@@ -102,20 +102,19 @@ def main() -> int:
                 and "function rellenarDemo" in js.text
                 and "function activarPestana" in js.text
             )
-            login = (
-                'id="btn-login"' in pagina.text
-                and 'id="login-usuario"' in pagina.text
-                and "function iniciarSesion" in js.text
-                and 'cabeceras.Authorization = "Bearer " + tokenActual' in js.text
+            sin_login = (
+                'id="btn-login"' not in pagina.text
+                and 'id="login-usuario"' not in pagina.text
+                and "function iniciarSesion" not in js.text
             )
             chequear(pestanas, "las pestañas de RF-05 y RF-34 no estan en la pagina")
             chequear(relleno, "el relleno automatico de ejemplo no esta disponible")
-            chequear(login, "el inicio de sesion o el envio del token no estan en la interfaz")
+            chequear(sin_login, "la interfaz todavia muestra controles de inicio de sesion")
             lineas.append(
                 "UI | pestanas: crear / editar / catalogo "
                 f"({'presentes' if pestanas else 'AUSENTES'}); "
                 f"relleno automatico: {'presente' if relleno else 'AUSENTE'}; "
-                f"login y token: {'presentes' if login else 'AUSENTES'}"
+                f"sin login en la interfaz: {'si' if sin_login else 'NO'}"
             )
             lineas.append("")
 

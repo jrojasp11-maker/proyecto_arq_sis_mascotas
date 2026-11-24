@@ -7,11 +7,6 @@
 
 const BASE = "/api/v1";
 
-/* El token se guarda solo en memoria: no se escribe en localStorage. */
-let tokenActual = null;
-let rolActual = null;
-let refugioActual = null;
-
 function porId(id) {
   return document.getElementById(id);
 }
@@ -39,9 +34,7 @@ function estado(destino, texto) {
 async function pedir(url, opciones) {
   try {
     const original = opciones || {};
-    const cabeceras = Object.assign({}, original.headers || {});
-    if (tokenActual) cabeceras.Authorization = "Bearer " + tokenActual;
-    const respuesta = await fetch(url, Object.assign({}, original, { headers: cabeceras }));
+    const respuesta = await fetch(url, original);
     let datos = null;
     const cuerpo = await respuesta.text();
     if (cuerpo) {
@@ -88,53 +81,6 @@ function avisoComunicacion(accion, resultado) {
 function avisoServidor(accion, resultado) {
   return accion + ": el servidor no esta disponible (HTTP " + resultado.status + "). "
     + "El resultado no queda confirmado; no reintente automaticamente.";
-}
-
-async function iniciarSesion(evento) {
-  if (evento) evento.preventDefault();
-  estado("estado-login", "Autenticando...");
-  const cuerpo = {
-    usuario: valor("login-usuario"),
-    contrasena: porId("login-contrasena").value,
-  };
-  try {
-    const respuesta = await fetch(BASE + "/auth/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(cuerpo),
-    });
-    const datos = await respuesta.json().catch(function () { return null; });
-    if (!respuesta.ok || !datos || !datos.access_token) {
-      tokenActual = null;
-      rolActual = null;
-      refugioActual = null;
-      estado("estado-login", "Sin sesion");
-      mensaje(
-        "resultado-crear",
-        "Inicio de sesion rechazado (HTTP " + respuesta.status + "). "
-          + ((datos && datos.detail) || "credenciales invalidas") + ".",
-        "rechazo"
-      );
-      return;
-    }
-    tokenActual = datos.access_token;
-    rolActual = datos.rol;
-    refugioActual = datos.refugio_id;
-    estado(
-      "estado-login",
-      "Sesion: " + rolActual + (refugioActual ? " (refugio " + refugioActual + ")" : "")
-    );
-    mensaje("resultado-crear", "", "");
-  } catch (error) {
-    tokenActual = null;
-    estado("estado-login", "Sin sesion");
-    mensaje(
-      "resultado-crear",
-      "No se pudo contactar el endpoint de autenticacion: "
-        + (error && error.message ? error.message : "sin detalle"),
-      "error"
-    );
-  }
 }
 
 function faltanCampos(ids) {
@@ -493,11 +439,3 @@ pestanas.forEach(function (nombre, indice) {
 porId("btn-rellenar").addEventListener("click", rellenarDemo);
 porId("btn-ir-editar").addEventListener("click", function () { activarPestana("editar"); });
 porId("btn-ir-catalogo").addEventListener("click", function () { activarPestana("catalogo"); });
-porId("btn-login").addEventListener("click", iniciarSesion);
-
-/* La credencial no se muestra: si el usuario la teclea, se autentica como refugio. */
-if (porId("login-contrasena").value) {
-  iniciarSesion();
-} else {
-  estado("estado-login", "Ingrese la credencial demo e inicie sesion");
-}

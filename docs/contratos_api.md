@@ -16,10 +16,10 @@ Formato: JSON, nombres en `snake_case`, identificadores enteros y fechas
 
 ## Autenticación y roles
 
-Todas las rutas de `/api/v1` requieren la cabecera
+Las operaciones de escritura de `/api/v1` requieren la cabecera
 `Authorization: Bearer <access_token>`, obtenida en el único endpoint nuevo:
 
-`POST /auth/token` (sin autenticación previa).
+`POST /auth/token` (sin autenticación previa). La consulta `GET /mascotas` es pública.
 
 Cuerpo:
 
@@ -44,16 +44,16 @@ Respuesta `200 OK`:
 
 Los roles son `refugio`, `adoptante` y `admin`. Las contraseñas se verifican con
 PBKDF2-HMAC-SHA256 y el token se firma con JWT HS256 mediante
-`AUTH_JWT_SECRET`. El token se conserva solo en memoria en el navegador; no se
-escribe en `localStorage`.
+`AUTH_JWT_SECRET`. La interfaz no gestiona credenciales: el token se obtiene y
+se envía desde la API en las operaciones de escritura.
 
 | Rol | `GET /mascotas` | `POST`, `PUT` y `DELETE /mascotas` |
 |---|---|---|
-| `adoptante` | Permitido | Denegado (`403` ERR-403) |
-| `refugio` | Permitido | Solo sobre su `refugio_id` |
-| `admin` | Permitido | Cualquier refugio |
+| `adoptante` | Público | Denegado (`403` ERR-403) |
+| `refugio` | Público | Solo sobre su `refugio_id` |
+| `admin` | Público | Cualquier refugio |
 
-Si falta el token, no es válido o expiró, la respuesta es `401` con ERR-401.
+En las escrituras, si falta el token, no es válido o expiró, la respuesta es `401` con ERR-401.
 Si el token es válido pero el rol no puede ejecutar la operación, la respuesta
 es `403` con ERR-403. Un `refugio` que intente actuar por otro refugio recibe
 `403` ERR-003.
@@ -72,7 +72,7 @@ negocio y los formatos de fecha permanecen iguales.
 | RF-05 | `POST /mascotas` | `ServicioMascotas.crear` | `201` ficha creada | `400` ERR-004, `401` ERR-401, `403` ERR-003/ERR-403, `404` ERR-008, `409` ERR-009 |
 | RF-05 | `PUT /mascotas/{id}` | `ServicioMascotas.actualizar` | `200` ficha actualizada | `400` ERR-004, `401` ERR-401, `403` ERR-003/ERR-403, `404` ERR-011 |
 | RF-05 | `DELETE /mascotas/{id}?refugio_id={id}` | `ServicioMascotas.dar_de_baja` | `204` sin cuerpo | `400` ERR-004, `401` ERR-401, `403` ERR-003/ERR-403, `404` ERR-011 |
-| RF-34 | `GET /mascotas` | `ServicioCatalogo.listar` | `200` página del catálogo | `400` ERR-004, `401` ERR-401 |
+| RF-34 | `GET /mascotas` | `ServicioCatalogo.listar` | `200` página del catálogo | `400` ERR-004 |
 
 ## Códigos de error
 
@@ -204,7 +204,7 @@ La baja es lógica: la ficha pasa a `baja` y deja de aparecer en el catálogo
 
 `GET /mascotas`
 
-Requiere cualquier rol autenticado. Parámetros opcionales:
+No requiere autenticación. Parámetros opcionales:
 
 | Parámetro | Tipo | Regla |
 |---|---|---|
@@ -273,8 +273,8 @@ Filtro inválido — `400 Bad Request`:
 
 - Origen local permitido por CORS: `http://localhost:5173` y
   `http://127.0.0.1:5173` (configurable con `CORS_ORIGINS`).
-- La interfaz en `/ui/` inicia sesión y envía el JWT en cada petición; el token
-  vive solo en memoria.
+- La interfaz en `/ui/` consulta el catálogo sin autenticación; las escrituras
+  se autentican con el JWT obtenido en `/auth/token` desde la API.
 - Persistencia: PostgreSQL en Supabase, esquema `aqsis`, cuando existe
   `DATABASE_URL`; si no, SQLite local con `DB_PATH`.
 - URL pública de la demostración: <https://aqsis-corte-vertical.vercel.app/ui/>.

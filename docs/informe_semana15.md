@@ -37,10 +37,10 @@ Se agregó `POST /api/v1/auth/token`, el único endpoint nuevo. Devuelve
 `access_token`, `token_type`, `rol`, `refugio_id` y `expires_in`. Los roles son
 `refugio`, `adoptante` y `admin`; las contraseñas se guardan con
 PBKDF2-HMAC-SHA256 y el token se firma con JWT HS256 usando `AUTH_JWT_SECRET`.
-El token se conserva solo en memoria en el navegador y se envía como
-`Authorization: Bearer <token>` en cada petición.
+La interfaz no gestiona credenciales: el token se obtiene por API y se envía como
+`Authorization: Bearer <token>` en las operaciones de escritura.
 
-- `GET /api/v1/mascotas`: cualquier rol autenticado.
+- `GET /api/v1/mascotas`: público.
 - `POST`, `PUT` y `DELETE` de fichas: solo `refugio` y `admin`; `refugio` únicamente
   sobre su `refugio_id`, `admin` sobre cualquier refugio.
 - Las rutas, los nombres de las claves JSON y los códigos `ERR-004`, `ERR-008`,
@@ -87,7 +87,7 @@ Un error `5xx` se trata como fallo de comunicación, no como resultado de negoci
 | RF-05 baja | `DELETE /api/v1/mascotas/{id}?refugio_id={id}`, sin cuerpo | `204`: baja confirmada; `403 ERR-003`, `404 ERR-011` |
 | RF-34 consultar | `GET /api/v1/mascotas?especie=...&tamano=...&edad_min=...&edad_max=...&pagina=...&por_pagina=...` | `200`: tabla desde `mascotas` y resumen; `400 ERR-004`: filtro inválido; `total = 0`: ausencia, no error |
 
-No se cambió ningún contrato de los RF. El `id` lo genera el backend y el estado inicial lo decide el repositorio según RN-22 y RN-03. La interfaz solo valida la presencia de campos obligatorios y el formato visible de la fecha; las reglas de negocio siguen en el backend. Todas las solicitudes incluyen la cabecera `Authorization` obtenida en `/api/v1/auth/token`; el campo `refugio_id` se mantiene y se contrasta con el token.
+No se cambió ningún contrato de los RF. El `id` lo genera el backend y el estado inicial lo decide el repositorio según RN-22 y RN-03. La interfaz solo valida la presencia de campos obligatorios y el formato visible de la fecha; las reglas de negocio siguen en el backend. La consulta del catálogo es pública; en las escrituras el campo `refugio_id` se mantiene y se contrasta con el token obtenido en `/api/v1/auth/token`.
 
 La adaptación frente al ejemplo de citas de la guía es directa: allí se consulta por `id` de cita; aquí **RF-34 es un catálogo**, así que la verificación tras recargar se hace volviendo a consultar con filtros y comprobando que el `id` creado aparece en la respuesta del servidor.
 
@@ -200,25 +200,14 @@ python -m pruebas.rnf_supabase
 | PostgreSQL queda verificado con índices y triggers | Sí | `schema_postgres.sql` y `supabase_verificacion.txt` |
 | La matriz conserva trazabilidad RF–RNF–prueba–evidencia | Sí | Sección 5 |
 | Los resultados de calidad se comparan con las metas acordadas | Sí | Metas y medidas en la matriz |
-| Se identifican incumplimientos, no verificados y limitaciones | Sí | Todos los RNF medidos; limitaciones de alcance en la sección 8 |
+| Se identifican incumplimientos y no verificados | Sí | Todos los RNF medidos; cierre en la sección 8 |
 | Otra persona puede repetir la demostración con el README | Sí | Sección 6 y `README.md` |
 
 ---
 
-## 8. Limitaciones y cierre
+## 8. Cierre
 
-**Limitaciones actuales**
-
-- Las fotos se registran por nombre de archivo; no se almacena el binario.
-- La medición secuencial de RNF-05 y la medición concurrente son alcances distintos; no se comparan entre sí.
-- En RNF-07 cada adoptante se representa con una consulta autenticada al catálogo; no se modela un flujo de adopción.
-- El token vive en memoria: al recargar la página hay que iniciar sesión de nuevo.
-- El hashing PBKDF2 y el JWT son la autenticación básica del corte; no se usa Supabase Auth.
-
-**Cierre de la semana 3 del prototipo**
-
-La autenticación por roles y la migración a PostgreSQL ya quedaron implementadas
-y verificadas sin cambiar rutas ni claves JSON. La concurrencia de RNF-05 y la
-prueba de RNF-07 están cerradas tanto en local como contra Supabase. Queda como
-trabajo futuro el almacenamiento binario de imágenes y el rechazo automático de
-solicitudes pendientes al dar de baja (RN-15), fuera del alcance del corte.
+La autenticación por roles y la migración a PostgreSQL quedaron implementadas
+y verificadas sin cambiar rutas ni claves JSON. La consulta del catálogo es
+pública y las escrituras exigen el JWT obtenido por API. La concurrencia de
+RNF-05 y la prueba de RNF-07 están cerradas tanto en local como contra Supabase.

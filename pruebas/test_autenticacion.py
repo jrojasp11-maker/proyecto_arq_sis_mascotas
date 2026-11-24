@@ -37,7 +37,7 @@ def test_login_contraseña_incorrecta_401(cliente_sin_token):
 
 
 def test_sin_token_401(cliente_sin_token):
-    assert cliente_sin_token.get("/api/v1/mascotas").status_code == 401
+    assert cliente_sin_token.get("/api/v1/mascotas").status_code == 200
     respuesta = cliente_sin_token.post(
         "/api/v1/mascotas", json=datos_mascota()
     )
@@ -46,8 +46,10 @@ def test_sin_token_401(cliente_sin_token):
 
 
 def test_token_invalido_401(cliente_sin_token):
-    respuesta = cliente_sin_token.get(
-        "/api/v1/mascotas", headers={"Authorization": "Bearer token-no-valido"}
+    respuesta = cliente_sin_token.post(
+        "/api/v1/mascotas",
+        json=datos_mascota(),
+        headers={"Authorization": "Bearer token-no-valido"},
     )
     assert respuesta.status_code == 401
     assert respuesta.json()["codigo"] == "ERR-401"
@@ -66,8 +68,9 @@ def test_token_expirado_401(cliente_sin_token):
         SECRETO_PRUEBAS,
         algorithm="HS256",
     )
-    respuesta = cliente_sin_token.get(
+    respuesta = cliente_sin_token.post(
         "/api/v1/mascotas",
+        json=datos_mascota(),
         headers={"Authorization": f"Bearer {expirado}"},
     )
     assert respuesta.status_code == 401
