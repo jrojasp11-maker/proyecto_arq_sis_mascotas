@@ -15,15 +15,19 @@
       <fieldset>
         <legend>Acceso</legend>
         <div class="rejilla corta">
-          <label for="login-usuario">Rol</label>
-          <select id="login-usuario" required>
-            <option value="refugio">refugio</option>
-            <option value="adoptante">adoptante</option>
-            <option value="admin">admin</option>
-          </select>
+          <div class="campo">
+            <label for="login-usuario">Rol</label>
+            <select id="login-usuario" required>
+              <option value="refugio">refugio</option>
+              <option value="adoptante">adoptante</option>
+              <option value="admin">admin</option>
+            </select>
+          </div>
 
-          <label for="login-contrasena">Contraseña</label>
-          <input id="login-contrasena" type="password" autocomplete="current-password" required>
+          <div class="campo">
+            <label for="login-contrasena">Contraseña</label>
+            <input id="login-contrasena" type="password" autocomplete="current-password" required>
+          </div>
         </div>
         <div class="acciones">
           <button id="btn-login" type="submit">Iniciar sesión</button>
@@ -61,34 +65,46 @@
           <p class="ayuda">Los campos marcados con <strong>*</strong> son obligatorios. El backend decide el estado final. Use <strong>Rellenar datos de ejemplo</strong> para cargar una ficha válida en un clic.</p>
 
           <div class="rejilla">
-            <label for="refugio_id">Refugio que publica *</label>
-            <select id="refugio_id" name="refugio_id" required>
-              <option value="1">1 — Patitas (verificado)</option>
-              <option value="2">2 — Colitas (pendiente, prueba de rechazo)</option>
-            </select>
+            <div class="campo">
+              <label for="refugio_id">Refugio que publica *</label>
+              <select id="refugio_id" name="refugio_id" required>
+                <option value="1">1 — Patitas (verificado)</option>
+                <option value="2">2 — Colitas (pendiente, prueba de rechazo)</option>
+              </select>
+            </div>
 
-            <label for="nombre">Nombre *</label>
-            <input id="nombre" name="nombre" type="text" maxlength="60" required value="Nala">
+            <div class="campo">
+              <label for="nombre">Nombre *</label>
+              <input id="nombre" name="nombre" type="text" maxlength="60" required value="Nala">
+            </div>
 
-            <label for="raza">Raza aproximada</label>
-            <input id="raza" name="raza" type="text" maxlength="80" value="Mestiza">
+            <div class="campo">
+              <label for="raza">Raza aproximada</label>
+              <input id="raza" name="raza" type="text" maxlength="80" value="Mestiza">
+            </div>
 
-            <label for="especie">Especie *</label>
-            <select id="especie" name="especie" required>
-              <option value="perro">perro</option>
-              <option value="gato">gato</option>
-              <option value="conejo">conejo (prueba de rechazo)</option>
-            </select>
+            <div class="campo">
+              <label for="especie">Especie *</label>
+              <select id="especie" name="especie" required>
+                <option value="perro">perro</option>
+                <option value="gato">gato</option>
+                <option value="conejo">conejo (prueba de rechazo)</option>
+              </select>
+            </div>
 
-            <label for="edad_meses">Edad en meses *</label>
-            <input id="edad_meses" name="edad_meses" type="number" min="0" max="300" required value="24">
+            <div class="campo">
+              <label for="edad_meses">Edad en meses *</label>
+              <input id="edad_meses" name="edad_meses" type="number" min="0" max="300" required value="24">
+            </div>
 
-            <label for="tamano">Tamaño *</label>
-            <select id="tamano" name="tamano" required>
-              <option value="pequeno">pequeño</option>
-              <option value="mediano" selected>mediano</option>
-              <option value="grande">grande</option>
-            </select>
+            <div class="campo">
+              <label for="tamano">Tamaño *</label>
+              <select id="tamano" name="tamano" required>
+                <option value="pequeno">pequeño</option>
+                <option value="mediano" selected>mediano</option>
+                <option value="grande">grande</option>
+              </select>
+            </div>
 
           </div>
         </fieldset>
@@ -98,31 +114,43 @@
           <p class="ayuda">Estos datos completan la ficha y apoyan las reglas de adopción responsable.</p>
 
           <div class="rejilla">
-            <label for="nivel_energia">Nivel de energía *</label>
-            <select id="nivel_energia" name="nivel_energia" required>
-              <option value="baja">baja</option>
-              <option value="media" selected>media</option>
-              <option value="alta">alta</option>
-            </select>
+            <div class="campo">
+              <label for="nivel_energia">Nivel de energía *</label>
+              <select id="nivel_energia" name="nivel_energia" required>
+                <option value="baja">baja</option>
+                <option value="media" selected>media</option>
+                <option value="alta">alta</option>
+              </select>
+            </div>
 
-            <label for="experiencia_requerida">Experiencia requerida *</label>
-            <select id="experiencia_requerida" name="experiencia_requerida" required>
-              <option value="basica" selected>básica</option>
-              <option value="intermedia">intermedia</option>
-              <option value="avanzada">avanzada</option>
-            </select>
+            <div class="campo">
+              <label for="experiencia_requerida">Experiencia requerida *</label>
+              <select id="experiencia_requerida" name="experiencia_requerida" required>
+                <option value="basica" selected>básica</option>
+                <option value="intermedia">intermedia</option>
+                <option value="avanzada">avanzada</option>
+              </select>
+            </div>
 
-            <label for="fecha_publicacion">Fecha de publicación (AAAA-MM-DD) *</label>
-            <input id="fecha_publicacion" name="fecha_publicacion" type="date" required value="2026-11-20">
+            <div class="campo">
+              <label for="fecha_publicacion">Fecha de publicación (AAAA-MM-DD) *</label>
+              <input id="fecha_publicacion" name="fecha_publicacion" type="date" required value="2026-11-20">
+            </div>
 
-            <label for="fotografias">Fotografías (nombres separados por coma; 0 a 5)</label>
-            <input id="fotografias" name="fotografias" type="text" value="nala_01.jpg, nala_02.jpg">
+            <div class="campo">
+              <label for="fotografias">Fotografías (nombres separados por coma; 0 a 5)</label>
+              <input id="fotografias" name="fotografias" type="text" value="nala_01.jpg, nala_02.jpg">
+            </div>
 
-            <label for="historial_salud">Historial de salud</label>
-            <input id="historial_salud" name="historial_salud" type="text" maxlength="1000" value="Vacunas al día">
+            <div class="campo">
+              <label for="historial_salud">Historial de salud</label>
+              <input id="historial_salud" name="historial_salud" type="text" maxlength="1000" value="Vacunas al día">
+            </div>
 
-            <label for="historial_comportamiento">Historial de comportamiento</label>
-            <input id="historial_comportamiento" name="historial_comportamiento" type="text" maxlength="1000" value="Sociable">
+            <div class="campo">
+              <label for="historial_comportamiento">Historial de comportamiento</label>
+              <input id="historial_comportamiento" name="historial_comportamiento" type="text" maxlength="1000" value="Sociable">
+            </div>
           </div>
 
           <div class="casillas">
@@ -148,17 +176,23 @@
           <legend>Editar o dar de baja una ficha</legend>
           <p class="ayuda">Use el <strong>id</strong> devuelto por la API al crear. Estas acciones también llegan al repositorio.</p>
           <div class="rejilla corta">
-            <label for="id-editar">Id de la ficha *</label>
-            <input id="id-editar" type="number" min="1" required placeholder="por ejemplo, 7">
+            <div class="campo">
+              <label for="id-editar">Id de la ficha *</label>
+              <input id="id-editar" type="number" min="1" required placeholder="por ejemplo, 7">
+            </div>
 
-            <label for="refugio-editar">Refugio dueño *</label>
-            <select id="refugio-editar" required>
-              <option value="1">1 — Patitas (verificado)</option>
-              <option value="2">2 — Colitas (pendiente)</option>
-            </select>
+            <div class="campo">
+              <label for="refugio-editar">Refugio dueño *</label>
+              <select id="refugio-editar" required>
+                <option value="1">1 — Patitas (verificado)</option>
+                <option value="2">2 — Colitas (pendiente)</option>
+              </select>
+            </div>
 
-            <label for="nombre-editar">Nuevo nombre</label>
-            <input id="nombre-editar" type="text" maxlength="60" value="Nala actualizada">
+            <div class="campo">
+              <label for="nombre-editar">Nuevo nombre</label>
+              <input id="nombre-editar" type="text" maxlength="60" value="Nala actualizada">
+            </div>
           </div>
           <div class="acciones">
             <button id="btn-editar" type="button">Actualizar nombre</button>
@@ -177,33 +211,45 @@
         <fieldset class="bloque">
           <legend>1. Filtros y paginación</legend>
           <div class="rejilla">
-            <label for="filtro-especie">Especie</label>
-            <select id="filtro-especie">
-              <option value="">(todas)</option>
-              <option value="perro">perro</option>
-              <option value="gato">gato</option>
-              <option value="conejo">conejo (prueba de rechazo)</option>
-            </select>
+            <div class="campo">
+              <label for="filtro-especie">Especie</label>
+              <select id="filtro-especie">
+                <option value="">(todas)</option>
+                <option value="perro">perro</option>
+                <option value="gato">gato</option>
+                <option value="conejo">conejo (prueba de rechazo)</option>
+              </select>
+            </div>
 
-            <label for="filtro-tamano">Tamaño</label>
-            <select id="filtro-tamano">
-              <option value="">(todos)</option>
-              <option value="pequeno">pequeño</option>
-              <option value="mediano">mediano</option>
-              <option value="grande">grande</option>
-            </select>
+            <div class="campo">
+              <label for="filtro-tamano">Tamaño</label>
+              <select id="filtro-tamano">
+                <option value="">(todos)</option>
+                <option value="pequeno">pequeño</option>
+                <option value="mediano">mediano</option>
+                <option value="grande">grande</option>
+              </select>
+            </div>
 
-            <label for="filtro-edad-min">Edad mínima (meses)</label>
-            <input id="filtro-edad-min" type="number" min="0" placeholder="sin mínimo">
+            <div class="campo">
+              <label for="filtro-edad-min">Edad mínima (meses)</label>
+              <input id="filtro-edad-min" type="number" min="0" placeholder="sin mínimo">
+            </div>
 
-            <label for="filtro-edad-max">Edad máxima (meses)</label>
-            <input id="filtro-edad-max" type="number" min="0" placeholder="sin máximo">
+            <div class="campo">
+              <label for="filtro-edad-max">Edad máxima (meses)</label>
+              <input id="filtro-edad-max" type="number" min="0" placeholder="sin máximo">
+            </div>
 
-            <label for="filtro-pagina">Página</label>
-            <input id="filtro-pagina" type="number" min="1" value="1" required>
+            <div class="campo">
+              <label for="filtro-pagina">Página</label>
+              <input id="filtro-pagina" type="number" min="1" value="1" required>
+            </div>
 
-            <label for="filtro-por-pagina">Por página</label>
-            <input id="filtro-por-pagina" type="number" min="1" max="100" value="20" required>
+            <div class="campo">
+              <label for="filtro-por-pagina">Por página</label>
+              <input id="filtro-por-pagina" type="number" min="1" max="100" value="20" required>
+            </div>
           </div>
           <div class="acciones">
             <button id="btn-consultar" type="submit">Consultar catálogo</button>

@@ -57,6 +57,9 @@ fieldset {
 
 .rejilla.corta { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 
+.campo { min-width: 0; }
+.campo label { margin-bottom: 4px; }
+
 .panel.login {
   max-width: 520px;
   margin: 56px auto;
