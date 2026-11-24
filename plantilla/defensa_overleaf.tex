@@ -1,0 +1,410 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\geometry{margin=2cm}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{titlesec}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue, pdftitle={Guion de defensa - Corte vertical AQSIS}}
+
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\rf}[1]{\textbf{#1}}
+
+\titleformat{\section}{\Large\bfseries\color{blue}}{}{0em}{}
+\titleformat{\subsection}{\large\bfseries}{}{0em}{}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  frame=single,
+  breaklines=true,
+  columns=fullflexible,
+  xleftmargin=6pt,
+  xrightmargin=6pt
+}
+
+\title{\textbf{Guion de defensa}\\Corte vertical AQSIS}
+\author{Arquitectura de Sistemas I}
+\date{Noviembre de 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{La idea en una frase}
+
+Este proyecto no construye todo un sistema de adopción. Construye un
+\textbf{corte vertical}: dos funcionalidades reales, llevadas desde la base de
+datos hasta la interfaz.
+
+Las dos funcionalidades son:
+
+\begin{itemize}[leftmargin=*]
+  \item \rf{RF-05:} el refugio crea, edita y da de baja la ficha de una mascota.
+  \item \rf{RF-34:} el adoptante consulta el catálogo con filtros, paginación y
+    orden estable.
+\end{itemize}
+
+Un corte vertical es una porción pequeña pero completa. Se puede explicar así:
+
+\begin{center}
+  \code{Interfaz} $\rightarrow$ \code{API} $\rightarrow$ \code{Servicio}
+  $\rightarrow$ \code{Repositorio} $\rightarrow$ \code{Base de datos}
+\end{center}
+
+Cada capa hace una sola cosa y se puede probar por separado.
+
+\section{Qué se hizo cada semana}
+
+\subsection{Semana 13 --- Base de datos y persistencia}
+
+Se definió cómo se guarda la información:
+
+\begin{itemize}[leftmargin=*]
+  \item Tablas: \code{refugio}, \code{mascota}, \code{fotografia} y
+    \code{usuario}.
+  \item Llaves foráneas para que una foto pertenezca siempre a una ficha y una
+    ficha pertenezca siempre a un refugio.
+  \item Restricciones \code{CHECK} y triggers para que el estado de una ficha
+    no quede libre: el backend y la base de datos aplican las reglas RN-22 y
+    RN-03.
+  \item Índices para acelerar las consultas del catálogo.
+  \item Repositorio: la única capa que contiene SQL.
+\end{itemize}
+
+Frase para decir:
+
+\begin{quote}
+  ``En la semana 13 aseguramos que los datos fueran correctos y que la base no
+  permitiera estados inválidos.''.
+\end{quote}
+
+\subsection{Semana 14 --- Servicios y API}
+
+Se subió un nivel y la persistencia se volvió utilizable por HTTP:
+
+\begin{itemize}[leftmargin=*]
+  \item Servicios de aplicación para RF-05 y RF-34.
+  \item API REST con FastAPI y cuatro endpoints de los RF.
+  \item Contratos documentados: entrada, salida y errores.
+  \item Traducción de errores a códigos como \code{ERR-004}, \code{ERR-008},
+    \code{ERR-009} y \code{ERR-011}.
+  \item Pruebas HTTP reales: crear, consultar, editar y dar de baja.
+\end{itemize}
+
+Frase para decir:
+
+\begin{quote}
+  ``En la semana 14 la base dejó de ser interna y pasó a estar detrás de una API
+  documentada y probable.''.
+\end{quote}
+
+\subsection{Semana 15 --- Integración, autenticación y cierre}
+
+Se cerró el corte completo:
+
+\begin{itemize}[leftmargin=*]
+  \item Login con \code{POST /auth/token}, JWT HS256 y contraseñas con PBKDF2.
+  \item Roles \code{refugio}, \code{adoptante} y \code{admin}; validación de
+    propietario sobre el \code{refugio\_id}.
+  \item Interfaz en \code{/ui/} con pantalla de inicio de sesión: primero se
+    entra y después se muestran las tres pestañas.
+  \item Supabase como base PostgreSQL persistente, esquema \code{aqsis}, con
+    índices y triggers verificados.
+  \item Medición de desempeño y escalabilidad en local y contra Supabase.
+  \item 53 pruebas pasan, informe compilado en Overleaf y despliegue en Vercel.
+\end{itemize}
+
+Frase para decir:
+
+\begin{quote}
+  ``En la semana 15 unimos todas las capas: la interfaz se autentica, la API
+  autoriza, Supabase persiste y las evidencias cierran la matriz RF--RNF.''.
+\end{quote}
+
+\section{Conceptos que puedo explicar}
+
+\subsection{API, REST y endpoint}
+
+\begin{description}[leftmargin=*,style=nextline]
+  \item[API.] Es la forma en que un programa habla con otro por HTTP. Aquí la
+    interfaz no accede directamente a la base: le pide datos a la API.
+  \item[REST.] Es un estilo de API donde cada \textbf{recurso} tiene una
+    dirección y se usa el verbo HTTP para indicar la acción.
+  \item[Endpoint.] Es una dirección concreta. Por ejemplo:
+    \code{GET /api/v1/mascotas}.
+  \item[Recurso.] Es el objeto del cual se habla. Aquí el recurso principal es
+    \code{mascota}.
+\end{description}
+
+\subsection{Los verbos HTTP}
+
+\begin{tabularx}{\linewidth}{@{}p{2.2cm}X@{}}
+\toprule
+\textbf{Verbo} & \textbf{Qué hace en este proyecto} \\
+\midrule
+\code{GET} & Lee o consulta. No modifica datos. Ejemplo: listar el catálogo. \\
+\code{POST} & Crea algo nuevo. Ejemplo: crear una ficha. También se usa para
+  pedir el token en \code{POST /auth/token}. \\
+\code{PUT} & Actualiza un recurso identificado por su \code{id}. Ejemplo:
+  cambiar el nombre de una ficha. \\
+\code{DELETE} & Elimina o da de baja. Aquí hace baja lógica, no borra la fila. \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Request y response}
+
+\begin{description}[leftmargin=*,style=nextline]
+  \item[Request.] Es lo que el cliente envía: método, URL, cabeceras y, si
+    aplica, un cuerpo.
+  \item[Response.] Es lo que el servidor devuelve: código HTTP, cabeceras y un
+    cuerpo con datos o con un error.
+  \item[Body.] Es el cuerpo de la petición. Aquí es JSON con claves en
+    \code{snake\_case}.
+  \item[Header.] Es información adicional. La más importante aquí es
+    \code{Authorization: Bearer TOKEN}.
+  \item[Path parameter.] Va dentro de la URL. Ejemplo: el \code{id} en
+    \code{/mascotas/7}.
+  \item[Query parameter.] Va después de \code{?}. Ejemplo:
+    \code{?especie=perro\&pagina=1}.
+\end{description}
+
+Ejemplo de petición de creación:
+
+\begin{lstlisting}
+POST /api/v1/mascotas
+Authorization: Bearer TOKEN
+Content-Type: application/json
+
+{
+  "refugio_id": 1,
+  "nombre": "Nala",
+  "especie": "perro",
+  "fotografias": ["nala_01.jpg", "nala_02.jpg"]
+}
+\end{lstlisting}
+
+\subsection{Códigos HTTP}
+
+\begin{tabularx}{\linewidth}{@{}p{1.5cm}p{1.8cm}X@{}}
+\toprule
+\textbf{Código} & \textbf{Nombre} & \textbf{Qué significa aquí} \\
+\midrule
+200 & OK & La consulta o actualización salió bien. \\
+201 & Created & Se creó una ficha y la respuesta trae el \code{id} real. \\
+204 & No Content & La baja se hizo, pero no hay cuerpo que devolver. \\
+400 & Bad Request & Datos inválidos. Se traduce a \code{ERR-004}. \\
+401 & Unauthorized & Falta token, está mal o expiró. \code{ERR-401}. \\
+403 & Forbidden & El rol no puede hacer eso. \code{ERR-403}. \\
+404 & Not Found & No existe el refugio o la ficha. \code{ERR-008} /
+  \code{ERR-011}. \\
+409 & Conflict & Conflicto de negocio, por ejemplo refugio no verificado.
+  \code{ERR-009}. \\
+500 & Server Error & Falló el servidor; no se expone el detalle técnico. \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Token, JWT y roles}
+
+\begin{description}[leftmargin=*,style=nextline]
+  \item[Autenticación.] Responde ``quién eres''. Se hace con usuario y
+    contraseña en \code{POST /auth/token}.
+  \item[Autorización.] Responde ``qué puedes hacer''. Depende del rol y del
+    propietario de la ficha.
+  \item[JWT.] Es un token firmado. El servidor lo emite y luego puede verificar
+    que nadie lo cambió.
+  \item[Bearer.] Es la forma de enviar el token en la cabecera:
+    \code{Authorization: Bearer TOKEN}.
+  \item[Propietario.] Un refugio solo puede modificar fichas cuyo
+    \code{refugio\_id} coincide con el de su token.
+\end{description}
+
+Importante: \code{GET /mascotas} es público en la API. Las escrituras
+\code{POST}, \code{PUT} y \code{DELETE} sí requieren token.
+
+\subsection{Hash y contraseñas}
+
+\begin{description}[leftmargin=*,style=nextline]
+  \item[Hash.] Es una huella irreversible. No se puede ``desencriptar'' para
+    recuperar la contraseña.
+  \item[PBKDF2.] Es el algoritmo usado para generar esa huella con iteraciones,
+    lo que dificulta adivinar la contraseña.
+  \item[Diferencia con cifrado.] El cifrado sí se puede revertir con una clave;
+    un hash no. Por eso guardamos hash, no contraseñas en texto plano.
+\end{description}
+
+\subsection{Base de datos}
+
+\begin{description}[leftmargin=*,style=nextline]
+  \item[PostgreSQL.] Base relacional real. Es la base objetivo del proyecto.
+  \item[Supabase.] Servicio que ofrece PostgreSQL administrado. Aquí se usa el
+    esquema \code{aqsis}.
+  \item[Esquema.] Es como una carpeta lógica dentro de la base: agrupa tablas,
+    índices y funciones.
+  \item[SQLite.] Base local usada para reproducir el proyecto sin instalar un
+    servidor. No reemplaza a Supabase: es el modo local.
+  \item[Llave foránea.] Relación entre tablas. Evita, por ejemplo, una ficha
+    sin refugio válido.
+  \item[Trigger.] Regla que la base ejecuta sola cuando algo cambia. Aquí
+    ayuda a mantener el estado correcto de la ficha.
+  \item[Índice.] Estructura que acelera búsquedas. No cambia los datos, solo
+    hace que encontrarlos sea más rápido.
+  \item[Baja lógica.] En vez de borrar la fila, se cambia el estado a
+    \code{baja}. Así se conserva la historia y la ficha deja de aparecer en el
+    catálogo.
+\end{description}
+
+\subsection{Consulta del catálogo}
+
+\begin{description}[leftmargin=*,style=nextline]
+  \item[Filtros.] El usuario puede filtrar por especie, tamaño y rango de edad.
+  \item[Paginación.] Se usan \code{pagina} y \code{por\_pagina} para no traer
+    toda la lista de una vez.
+  \item[Orden estable.] Ante la misma consulta, el servidor devuelve las filas
+    en el mismo orden. No depende del azar.
+  \item[Total.] La respuesta incluye el total de resultados para que la interfaz
+    sepa cuántas páginas existen.
+\end{description}
+
+\subsection{Otros términos que pueden aparecer}
+
+\begin{tabularx}{\linewidth}{@{}p{3cm}X@{}}
+\toprule
+\textbf{Término} & \textbf{Explicación corta} \\
+\midrule
+CORS & Regla del navegador que permite que una página de un origen llame a
+  una API de otro origen. \\
+OpenAPI & Documentación automática de la API generada por FastAPI. \\
+Contrato & Acuerdo sobre rutas, claves JSON, respuestas y errores. \\
+Transacción & Conjunto de cambios que se aplican todos o ninguno. \\
+Rollback & Volver atrás cuando algo falla. \\
+Concurrencia & Muchos usuarios usando el sistema al mismo tiempo. \\
+Latencia & Tiempo que tarda una respuesta. \\
+p95 & El 95\% de las respuestas tarda menos de ese tiempo. \\
+Throughput & Cantidad de peticiones que el sistema atiende por segundo. \\
+Idempotente & Repetir la misma petición no produce un efecto distinto.
+  \code{DELETE} suele ser idempotente; \code{POST} no. \\
+Cache & Copia temporal para responder más rápido. \\
+Deploy & Publicar una versión nueva. \\
+Cobertura & Porcentaje de código que realmente ejecutan las pruebas. \\
+\bottomrule
+\end{tabularx}
+
+\section{Respuestas cortas si me preguntan}
+
+\begin{description}[leftmargin=*,style=nextline]
+  \item[¿Por qué solo dos RF?] Porque es un corte vertical: se eligió una
+    porción pequeña, pero se implementó completa en todas las capas.
+
+  \item[¿Por qué \code{GET} es público?] RF-34 es una consulta. No modifica
+    datos. La interfaz pide login para ordenar el acceso, pero la API no exige
+    token para listar.
+
+  \item[¿Por qué las escrituras sí piden token?] Porque cambiar una ficha es
+    una acción sensible. El token permite saber el rol y el refugio dueño.
+
+  \item[¿Por qué no usé Supabase Auth?] El requisito era autenticación básica
+    por rol sin cambiar rutas ni claves JSON. Se implementó JWT propio con
+    PBKDF2 y Supabase quedó como base de datos.
+
+  \item[¿Por qué el token vive en memoria?] Para no guardarlo de forma
+    persistente en el navegador. Al recargar la página hay que entrar de nuevo.
+
+  \item[¿Qué diferencia hay entre \code{ERR-401} y \code{ERR-403}?]
+    \code{ERR-401} significa que no hay un token válido. \code{ERR-403}
+    significa que el token existe, pero el rol no puede hacer esa operación.
+
+  \item[¿Y \code{ERR-003}?] Es el error de propietario: el token es válido y el
+    rol es correcto, pero ese refugio no es dueño de la ficha.
+
+  \item[¿Cómo sé que una ficha está \code{disponible}?] No lo decide la
+    interfaz. Lo decide el backend con las reglas RN-22 y RN-03, apoyado en
+    validaciones y triggers de la base.
+
+  \item[¿Qué pasa si un refugio intenta editar otra ficha?] La API devuelve
+    403 con \code{ERR-003}. No se permite aunque el token sea válido.
+
+  \item[¿Por qué \code{DELETE} devuelve 204?] Porque la operación terminó bien
+    pero no hay datos que devolver. La confirmación se ve al consultar el
+    catálogo: la ficha ya no aparece.
+
+  \item[¿Qué pasa si se pierde la respuesta de un \code{POST}?] Antes de
+    repetir, se consulta el catálogo para ver si la ficha ya se creó. Así se
+    evita duplicarla.
+
+  \item[¿Para qué sirve un índice?] Para encontrar filas más rápido. Es como el
+    índice de un libro: no cambia el contenido, pero acelera la búsqueda.
+
+  \item[¿Para qué sirve un trigger?] Para que una regla se cumpla
+    automáticamente en la base, aunque alguien intente escribir por otro
+    camino distinto a la API.
+
+  \item[¿Qué son RNF-05 y RNF-07?] RNF-05 mide desempeño: respuestas rápidas
+    y concurrencia moderada. RNF-07 mide escalabilidad: muchas fichas y muchas
+    consultas. Ambos se midieron en local y contra Supabase.
+
+  \item[¿Qué es RNF-08?] Testabilidad. Se demuestra porque los servicios se
+    pueden probar con un doble del repositorio, sin abrir una base real.
+
+  \item[¿Por qué SQLite y Supabase a la vez?] SQLite permite ejecutar y probar
+    sin infraestructura. Supabase demuestra la base PostgreSQL real y
+    persistente. El repositorio oculta cuál se está usando.
+
+  \item[¿Qué es paginación?] Dividir los resultados en páginas con
+    \code{pagina} y \code{por\_pagina} para no enviar miles de filas de una vez.
+
+  \item[¿Qué es orden estable?] Que la misma consulta devuelva siempre el
+    mismo orden, por ejemplo por fecha o por \code{id}, no al azar.
+
+  \item[¿Qué es un contrato de API?] La documentación que dice qué rutas
+    existen, qué JSON se envía, qué JSON se recibe y qué errores pueden salir.
+\end{description}
+
+\section{Frase final para cerrar}
+
+\begin{quote}
+  ``Mi proyecto es un corte vertical de dos requisitos funcionales. Cada semana
+  cerró una capa: la 13 la persistencia, la 14 los servicios y la API, y la 15
+  la integración con autenticación, interfaz, Supabase y evidencias. Todo lo que
+  se ve en la pantalla viene de la API real; no hay respuestas falsas ni lógica
+  de negocio en el navegador.''.
+\end{quote}
+
+\clearpage
+
+\section{Tarjeta rápida de memorizar}
+
+\begin{center}
+\begin{tabularx}{0.95\linewidth}{@{}X@{}}
+\toprule
+\textbf{Corte vertical:} dos RF completos, de la base a la interfaz. \\[3pt]
+\textbf{RF-05:} crear, editar, dar de baja. \\
+\textbf{RF-34:} consultar con filtros, paginación y orden estable. \\[3pt]
+\textbf{Semana 13:} tablas, reglas, repositorio. \\
+\textbf{Semana 14:} servicios, API, contratos, errores. \\
+\textbf{Semana 15:} login, roles, interfaz, Supabase, pruebas, deploy. \\[3pt]
+\textbf{GET:} público, solo lee. \\
+\textbf{POST/PUT/DELETE:} con token, modifican. \\[3pt]
+\textbf{401:} token ausente o inválido. \\
+\textbf{403:} rol no permitido. \\
+\textbf{ERR-003:} no es tu refugio. \\
+\textbf{204:} baja hecha, sin cuerpo. \\[3pt]
+\textbf{Supabase:} PostgreSQL persistente. \\
+\textbf{SQLite:} modo local reproducible. \\
+\textbf{Token:} en memoria, se envía como \code{Bearer}. \\
+\textbf{Contraseña:} hash con PBKDF2, nunca texto plano. \\[3pt]
+\textbf{Frase final:} ``no hay respuestas falsas; todo viene de la API real''. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\end{document}
