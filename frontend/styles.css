@@ -43,6 +43,11 @@ fieldset {
   padding: 20px;
 }
 
+.bloque { border-left: 4px solid var(--acento); }
+.bloque legend { color: var(--acento); }
+.bloque + .bloque { margin-top: 16px; }
+.bloque > table { border: 0; }
+
 .rejilla {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

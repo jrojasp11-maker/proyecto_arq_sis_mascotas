@@ -56,8 +56,8 @@
       <h2 id="titulo-rf05">RF-05 — Crear ficha</h2>
 
       <form id="form-crear" novalidate>
-        <fieldset>
-          <legend>Crear ficha</legend>
+        <fieldset class="bloque">
+          <legend>1. Datos de la ficha</legend>
           <p class="ayuda">Los campos marcados con <strong>*</strong> son obligatorios. El backend decide el estado final. Use <strong>Rellenar datos de ejemplo</strong> para cargar una ficha válida en un clic.</p>
 
           <div class="rejilla">
@@ -90,6 +90,14 @@
               <option value="grande">grande</option>
             </select>
 
+          </div>
+        </fieldset>
+
+        <fieldset class="bloque">
+          <legend>2. Criterios y publicación</legend>
+          <p class="ayuda">Estos datos completan la ficha y apoyan las reglas de adopción responsable.</p>
+
+          <div class="rejilla">
             <label for="nivel_energia">Nivel de energía *</label>
             <select id="nivel_energia" name="nivel_energia" required>
               <option value="baja">baja</option>
@@ -166,8 +174,8 @@
     <section id="panel-catalogo" class="panel" role="tabpanel" aria-labelledby="tab-catalogo" hidden>
       <h2 id="titulo-rf34">RF-34 — Consultar el catálogo</h2>
       <form id="form-catalogo" novalidate>
-        <fieldset>
-          <legend>Filtros y paginación</legend>
+        <fieldset class="bloque">
+          <legend>1. Filtros y paginación</legend>
           <div class="rejilla">
             <label for="filtro-especie">Especie</label>
             <select id="filtro-especie">
@@ -205,13 +213,16 @@
         </fieldset>
       </form>
 
-      <table>
-        <caption>Mascotas devueltas por la API</caption>
-        <thead>
-          <tr><th>Id</th><th>Nombre</th><th>Especie</th><th>Tamaño</th><th>Edad</th><th>Refugio</th></tr>
-        </thead>
-        <tbody id="cuerpo-catalogo"></tbody>
-      </table>
+      <fieldset class="bloque">
+        <legend>2. Resultados del catálogo</legend>
+        <table>
+          <caption>Mascotas devueltas por la API</caption>
+          <thead>
+            <tr><th>Id</th><th>Nombre</th><th>Especie</th><th>Tamaño</th><th>Edad</th><th>Refugio</th></tr>
+          </thead>
+          <tbody id="cuerpo-catalogo"></tbody>
+        </table>
+      </fieldset>
     </section>
   </main>
 
