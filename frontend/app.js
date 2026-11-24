@@ -1,11 +1,16 @@
 "use strict";
 
 /* Interfaz minima del corte vertical (semana 15).
- * No guarda estado en el navegador: cada resultado se obtiene de la API real.
+ * El acceso se abre solo despues de iniciar sesion contra la API.
+ * El token vive en memoria; cada resultado se obtiene de la API real.
  * El backend decide reglas, estados, identificadores y codigos de error.
  */
 
 const BASE = "/api/v1";
+
+let tokenActual = "";
+let rolActual = "";
+let refugioActual = null;
 
 function porId(id) {
   return document.getElementById(id);
@@ -62,6 +67,9 @@ async function pedir(url, opciones) {
 }
 
 function explicarRechazo(resultado, accion) {
+  if (resultado.status === 401) {
+    return accion + ": la sesion expiro o el token no es valido. Inicie sesion de nuevo.";
+  }
   const codigo = resultado.datos && resultado.datos.codigo
     ? resultado.datos.codigo
     : "sin codigo";
@@ -87,10 +95,16 @@ function faltanCampos(ids) {
   return ids.filter(function (id) { return valor(id) === ""; });
 }
 
+function cabecerasAutenticadas(adicionales) {
+  const cabeceras = Object.assign({}, adicionales || {});
+  if (tokenActual) cabeceras.Authorization = "Bearer " + tokenActual;
+  return cabeceras;
+}
+
 function jsonCuerpo(datos) {
   return {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: cabecerasAutenticadas({ "Content-Type": "application/json" }),
     body: JSON.stringify(datos),
   };
 }
@@ -190,7 +204,7 @@ async function editarFicha() {
   estado("estado-editar", "Enviando...");
   const resultado = await pedir(
     BASE + "/mascotas/" + id,
-    { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cuerpo) }
+    { method: "PUT", headers: cabecerasAutenticadas({ "Content-Type": "application/json" }), body: JSON.stringify(cuerpo) }
   );
   boton.disabled = false;
   porId("btn-baja").disabled = false;
@@ -237,7 +251,7 @@ async function darDeBaja() {
   estado("estado-editar", "Enviando...");
   const resultado = await pedir(
     BASE + "/mascotas/" + id + "?refugio_id=" + refugio,
-    { method: "DELETE" }
+    { method: "DELETE", headers: cabecerasAutenticadas() }
   );
   boton.disabled = false;
   porId("btn-editar").disabled = false;
@@ -366,6 +380,67 @@ async function consultarCatalogo(evento) {
   );
 }
 
+async function iniciarSesion(evento) {
+  evento.preventDefault();
+  const boton = porId("btn-login");
+  if (boton.disabled) return;
+
+  mensaje("resultado-login", "", "");
+  const usuario = valor("login-usuario");
+  const contrasena = porId("login-contrasena").value;
+  if (!usuario || !contrasena) {
+    mensaje("resultado-login", "Seleccione un rol e ingrese la contraseña.", "rechazo");
+    return;
+  }
+
+  boton.disabled = true;
+  estado("estado-login", "Verificando...");
+  const resultado = await pedir(BASE + "/auth/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ usuario: usuario, contrasena: contrasena }),
+  });
+  boton.disabled = false;
+  estado("estado-login", "");
+
+  if (resultado.comunicacion) {
+    mensaje("resultado-login", avisoComunicacion("Inicio de sesión", resultado), "error");
+    return;
+  }
+  if (resultado.ok && resultado.datos && resultado.datos.access_token) {
+    tokenActual = resultado.datos.access_token;
+    rolActual = resultado.datos.rol;
+    refugioActual = resultado.datos.refugio_id;
+    porId("panel-login").hidden = true;
+    porId("app").hidden = false;
+    estado(
+      "estado-sesion",
+      "Sesión: " + rolActual + (refugioActual ? " / refugio " + refugioActual : "")
+    );
+    porId("login-contrasena").value = "";
+    activarPestana("crear");
+    return;
+  }
+  if ([400, 401].indexOf(resultado.status) >= 0) {
+    mensaje(
+      "resultado-login",
+      "Inicio de sesión: credenciales rechazadas (HTTP " + resultado.status + "). Verifique el rol y la contraseña.",
+      "rechazo"
+    );
+    return;
+  }
+  if (resultado.status >= 500) {
+    mensaje("resultado-login", avisoServidor("Inicio de sesión", resultado), "error");
+    return;
+  }
+  mensaje(
+    "resultado-login",
+    "Inicio de sesión: respuesta inesperada HTTP " + resultado.status + ".",
+    "error"
+  );
+}
+
+porId("form-login").addEventListener("submit", iniciarSesion);
 porId("form-crear").addEventListener("submit", crearFicha);
 porId("form-editar").addEventListener("submit", function (evento) { evento.preventDefault(); });
 porId("form-catalogo").addEventListener("submit", consultarCatalogo);

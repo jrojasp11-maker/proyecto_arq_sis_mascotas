@@ -52,6 +52,17 @@ fieldset {
 
 .rejilla.corta { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
 
+.panel.login {
+  max-width: 520px;
+  margin: 56px auto;
+  padding: 28px;
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.panel.login h1 { text-align: center; }
+
 label { display: block; font-weight: 600; font-size: 0.9rem; }
 label[for] { margin-bottom: 4px; }
 

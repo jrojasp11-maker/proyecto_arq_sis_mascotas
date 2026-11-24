@@ -8,11 +8,39 @@
   <link rel="stylesheet" href="/ui/styles.css">
 </head>
 <body>
+  <section id="panel-login" class="panel login" aria-labelledby="titulo-login">
+    <h1 id="titulo-login">Inicio de sesión</h1>
+    <p class="ayuda">Seleccione el rol e ingrese la credencial demo para acceder al corte vertical.</p>
+    <form id="form-login" novalidate>
+      <fieldset>
+        <legend>Acceso</legend>
+        <div class="rejilla corta">
+          <label for="login-usuario">Rol</label>
+          <select id="login-usuario" required>
+            <option value="refugio">refugio</option>
+            <option value="adoptante">adoptante</option>
+            <option value="admin">admin</option>
+          </select>
+
+          <label for="login-contrasena">Contraseña</label>
+          <input id="login-contrasena" type="password" autocomplete="current-password" required>
+        </div>
+        <div class="acciones">
+          <button id="btn-login" type="submit">Iniciar sesión</button>
+          <span id="estado-login" class="estado" role="status" aria-live="polite"></span>
+        </div>
+        <p id="resultado-login" class="mensaje" role="status" aria-live="polite"></p>
+      </fieldset>
+    </form>
+  </section>
+
+  <div id="app" hidden>
   <header>
     <h1>Adopción responsable de mascotas</h1>
     <p>Interfaz mínima del corte vertical: RF-05 (ficha) y RF-34 (catálogo). Consume la API real en <code>/api/v1</code>.</p>
     <div class="barra-demo">
       <button id="btn-rellenar" type="button" class="secundario">Rellenar datos de ejemplo</button>
+      <span id="estado-sesion" class="estado" role="status" aria-live="polite"></span>
       <span id="estado-demo" class="estado" role="status" aria-live="polite"></span>
     </div>
   </header>
@@ -190,6 +218,7 @@
   <footer>
     <p>Recorrido: interfaz → API → servicio → repositorio → base de datos. Los estados y las reglas los decide el backend.</p>
   </footer>
+  </div>
 
   <script src="/ui/app.js"></script>
 </body>

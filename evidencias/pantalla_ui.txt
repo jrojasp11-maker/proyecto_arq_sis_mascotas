@@ -16,6 +16,10 @@ La seccion de errores y rechazos se reprodujo con el backend local porque una
 instancia de Vercel usa una base efimera en /tmp y no permite detener el servidor
 desde el navegador.
 
+Nota (acceso): el recorrido se realizo despues de iniciar sesion desde la pantalla
+de acceso con un rol demo. El token quedo solo en memoria y se envio en las
+escrituras; la consulta GET del catalogo es publica en la API.
+
 ------------------------------------------------------------------------------
 UI | organizacion y relleno automatico
 ------------------------------------------------------------------------------

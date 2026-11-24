@@ -516,7 +516,7 @@ proyecto_arq_sis_mascotas/
 **Incorporado en la semana 15**
 
 - Autenticación por roles y validación de propietario contra el token.
-- Interfaz mínima en `/ui/` que consulta el catálogo y conserva entradas.
+- Interfaz mínima en `/ui/` con pantalla de inicio de sesión; el resto del corte solo se abre con token.
 - Concurrencia de RNF-05 y prueba de RNF-07 en local y contra Supabase.
 - Migración y verificación en PostgreSQL (ADR-03/ADR-10).
 

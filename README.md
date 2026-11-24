@@ -125,7 +125,7 @@ Interfaz (/ui/) -> HTTP -> API (/api/v1) -> Servicio de aplicación -> Repositor
 
 | Capa | Dónde | Responsabilidad |
 |---|---|---|
-| Interfaz | `frontend/` | Mostrar los dos RF, consultar el catálogo sin autenticación, conservar entradas y reflejar estados. No gestiona credenciales. |
+| Interfaz | `frontend/` | Pedir credenciales en la pantalla de inicio de sesión, bloquear el corte hasta obtener token, mostrar los dos RF y reflejar estados. |
 | Seguridad | `seguridad/autenticacion.py` | Verificar contraseñas PBKDF2, firmar JWT HS256, exigir roles y comprobar el refugio propietario. |
 | API | `api/main.py` | Recibir HTTP, autenticar, validar la forma, delegar y traducir errores. No contiene reglas ni SQL. |
 | Servicio | `servicios/` | Coordinar el caso de uso, normalizar la respuesta y decidir la ausencia de una ficha. |
@@ -401,7 +401,7 @@ Salida esperada: `RESUMEN: 12/12 pruebas pasaron`
 
 **Alcance de la entrega**
 
-- La interfaz cubre los dos RF del corte y consulta el catálogo sin autenticación.
+- La interfaz exige inicio de sesión para abrir el corte; la API mantiene `GET /mascotas` público.
 - Las escrituras conservan `refugio_id` y validan el rol y el propietario contra
   el token obtenido por API.
 

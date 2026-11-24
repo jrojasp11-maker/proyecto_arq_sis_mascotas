@@ -44,8 +44,8 @@ Respuesta `200 OK`:
 
 Los roles son `refugio`, `adoptante` y `admin`. Las contraseñas se verifican con
 PBKDF2-HMAC-SHA256 y el token se firma con JWT HS256 mediante
-`AUTH_JWT_SECRET`. La interfaz no gestiona credenciales: el token se obtiene y
-se envía desde la API en las operaciones de escritura.
+`AUTH_JWT_SECRET`. La interfaz solicita las credenciales en `/ui/`, guarda el
+token solo en memoria y lo envía en las operaciones de escritura.
 
 | Rol | `GET /mascotas` | `POST`, `PUT` y `DELETE /mascotas` |
 |---|---|---|
@@ -273,8 +273,8 @@ Filtro inválido — `400 Bad Request`:
 
 - Origen local permitido por CORS: `http://localhost:5173` y
   `http://127.0.0.1:5173` (configurable con `CORS_ORIGINS`).
-- La interfaz en `/ui/` consulta el catálogo sin autenticación; las escrituras
-  se autentican con el JWT obtenido en `/auth/token` desde la API.
+- La interfaz en `/ui/` exige inicio de sesión para abrir el corte; la consulta
+  API del catálogo es pública y las escrituras usan el JWT de `/auth/token`.
 - Persistencia: PostgreSQL en Supabase, esquema `aqsis`, cuando existe
   `DATABASE_URL`; si no, SQLite local con `DB_PATH`.
 - URL pública de la demostración: <https://aqsis-corte-vertical.vercel.app/ui/>.

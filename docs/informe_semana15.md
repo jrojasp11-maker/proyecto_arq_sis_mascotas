@@ -37,7 +37,9 @@ Se agregó `POST /api/v1/auth/token`, el único endpoint nuevo. Devuelve
 `access_token`, `token_type`, `rol`, `refugio_id` y `expires_in`. Los roles son
 `refugio`, `adoptante` y `admin`; las contraseñas se guardan con
 PBKDF2-HMAC-SHA256 y el token se firma con JWT HS256 usando `AUTH_JWT_SECRET`.
-La interfaz no gestiona credenciales: el token se obtiene por API y se envía como
+La interfaz muestra una pantalla de inicio de sesión: valida las credenciales
+contra `/auth/token`, guarda el token solo en memoria y mantiene bloqueado el
+resto del corte hasta que la autenticación es correcta. El token se envía como
 `Authorization: Bearer <token>` en las operaciones de escritura.
 
 - `GET /api/v1/mascotas`: público.

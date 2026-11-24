@@ -240,7 +240,7 @@ Filtro del catálogo y baja lógica \\
 
 La autenticación por roles, la interfaz web y la migración a PostgreSQL se
 incorporaron en la semana 15 sin cambiar rutas ni claves JSON. La interfaz
-cubre los dos RF del corte y consulta el catálogo sin autenticación.
+exige inicio de sesión para abrir los dos RF del corte.
 
 \clearpage
 
@@ -528,8 +528,8 @@ POST /auth/token
 
 Las escrituras posteriores envían \code{Authorization: Bearer TOKEN}; la
 consulta \code{GET /mascotas} es pública. El token se firma con JWT HS256 y la
-credencial se verifica con PBKDF2-HMAC-SHA256. La interfaz no gestiona
-credenciales.
+credencial se verifica con PBKDF2-HMAC-SHA256. La interfaz pide las credenciales
+en una pantalla de inicio de sesión y guarda el token solo en memoria.
 
 \subsection{Ejemplos de los contratos}
 
@@ -961,6 +961,14 @@ estos contratos: la consulta del catálogo es pública y las escrituras envían 
 token obtenido por API. El campo \code{refugio\_id} se conserva y se valida
 contra el token.
 
+\subsection{Pantalla de inicio de sesión}
+
+La interfaz abre con una pantalla de acceso donde se selecciona el rol y se
+ingresa la credencial. El formulario llama a \code{POST /auth/token}; mientras
+no llega una respuesta correcta, el resto del corte permanece oculto. Después
+del inicio de sesión se muestran las tres pestañas y el token queda solo en
+memoria para las escrituras.
+
 \subsection{Organización por pestañas y relleno de ejemplo}
 
 La pantalla se divide en tres pestañas con navegación por teclado:
@@ -1163,8 +1171,8 @@ Sección 5: todos los RNF medidos; no quedan no verificados. \\
 Los RNF previstos tienen medidas y evidencias & \textbf{Sí} &
 RNF-04, 05, 07, 08 y 10. \\
 La autenticación por rol no altera rutas ni claves JSON & \textbf{Sí} &
-\code{/auth/token}, \code{test\_autenticacion.py} y
-\code{supabase\_verificacion.txt}. \\
+\code{/auth/token}, pantalla de inicio de sesión en \code{/ui/} y
+\code{test\_autenticacion.py}. \\
 PostgreSQL queda verificado con índices y triggers & \textbf{Sí} &
 \code{schema\_postgres.sql} y \code{supabase\_verificacion.txt}. \\
 El alcance queda descrito sin elementos pendientes & \textbf{Sí} &
