@@ -407,4 +407,74 @@ Cobertura & Porcentaje de código que realmente ejecutan las pruebas. \\
 \end{tabularx}
 \end{center}
 
+\clearpage
+
+\section{Anexo A --- Mapa de evidencias}
+
+Si el profesor pregunta ``¿cómo lo demuestras?'', contesta señalando esta tabla.
+No hace falta memorizar nombres largos: basta con saber que cada afirmación
+tiene un archivo detrás.
+
+\begin{tabularx}{\linewidth}{@{}p{3.1cm}p{3.2cm}X@{}}
+\toprule
+\textbf{Afirmación} & \textbf{Dónde se ve} & \textbf{Qué demuestra} \\
+\midrule
+RF-05 & \code{pruebas/}, \code{evidencias/supabase\_verificacion.txt} &
+  Crear, editar y dar de baja con reglas RN-22 y RN-03. \\
+RF-34 & \code{evidencias/pantalla\_ui.txt}, \code{evidencias/api.db} &
+  Catálogo con filtros, paginación y orden estable. \\
+Autenticación & \code{pruebas/test\_autenticacion.py},
+  \code{docs/contratos\_api.md} &
+  Token, roles, 401, 403 y error de propietario. \\
+Interfaz & \code{evidencias/integracion\_ui.txt}, URL de Vercel &
+  Login primero; después aparecen las tres pestañas. \\
+Supabase & \code{evidencias/supabase\_verificacion.txt} &
+  Esquema \code{aqsis}, índices y triggers en PostgreSQL real. \\
+Desempeño y escalabilidad & \code{evidencias/} (RNF-05 y RNF-07) &
+  Latencia y muchas peticiones en local y remoto. \\
+Testabilidad & \code{pruebas/} &
+  53 pruebas; los servicios usan un doble del repositorio. \\
+Integridad & \code{pruebas/}, reglas de la base &
+  Entradas inválidas rechazadas antes de persistir. \\
+\bottomrule
+\end{tabularx}
+
+\section{Anexo B --- Demo en 60 segundos}
+
+\begin{enumerate}[leftmargin=*]
+  \item Recargar \code{/ui/}. Mostrar que aparece solo el inicio de sesión y
+    que el resto está oculto.
+  \item Entrar con el rol \code{refugio} y la credencial demo acordada. No
+    escribir la credencial en el documento ni en pantalla compartida.
+  \item Crear una ficha con \emph{Rellenar datos de ejemplo} y enviarla. Mostrar
+    el 201 y el \code{id} devuelto.
+  \item Consultar el catálogo y filtrar. Mostrar que la ficha aparece y que el
+    total coincide.
+  \item Cambiar a un rol que no puede escribir o quitar el token. Mostrar el
+    403 con \code{ERR-403} o el 401 con \code{ERR-401}.
+  \item Dar de baja una ficha. Mostrar el 204 y que ya no aparece en el
+    catálogo.
+\end{enumerate}
+
+Frase para cerrar la demo:
+
+\begin{quote}
+  ``Lo que ves en pantalla viene de la API; el navegador no inventa respuestas
+  ni decide el estado de la ficha''.
+\end{quote}
+
+\section{Anexo C --- Frases que conviene evitar}
+
+\begin{itemize}[leftmargin=*]
+  \item No decir ``es un prototipo'': decir ``es un corte vertical''.
+  \item No decir ``el front valida'': valida el servicio y la base.
+  \item No decir ``el token se guarda en el navegador'': queda solo en memoria.
+  \item No decir ``DELETE borra la fila'': hace baja lógica.
+  \item No decir ``Supabase hace el login'': Supabase es la base; el JWT es
+    propio.
+  \item No decir ``falta conectar la interfaz'': la interfaz ya consume la API
+    real desplegada.
+  \item No mencionar credenciales, secretos ni tokens en la sustentación.
+\end{itemize}
+
 \end{document}
